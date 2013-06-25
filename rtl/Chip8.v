@@ -196,22 +196,22 @@ task updateKey;
 	input value;
 	begin
 		case (code)
-			8'h16: keyboardMatrix[4'h1] <= value;
-			8'h1E: keyboardMatrix[4'h2] <= value;
-			8'h26: keyboardMatrix[4'h3] <= value;
-			8'h25: keyboardMatrix[4'hC] <= value;
-			8'h15: keyboardMatrix[4'h4] <= value;
-			8'h1D: keyboardMatrix[4'h5] <= value;
-			8'h24: keyboardMatrix[4'h6] <= value;
-			8'h2D: keyboardMatrix[4'hD] <= value;
-			8'h1C: keyboardMatrix[4'h7] <= value;
-			8'h1B: keyboardMatrix[4'h8] <= value;
-			8'h23: keyboardMatrix[4'h9] <= value;
-			8'h2B: keyboardMatrix[4'hE] <= value;
-			8'h1A: keyboardMatrix[4'hA] <= value;
-			8'h22: keyboardMatrix[4'h0] <= value;
-			8'h21: keyboardMatrix[4'hB] <= value;
-			8'h2A: keyboardMatrix[4'hF] <= value;
+			8'h16: keyboardMatrix[4'h1] = value;
+			8'h1E: keyboardMatrix[4'h2] = value;
+			8'h26: keyboardMatrix[4'h3] = value;
+			8'h25: keyboardMatrix[4'hC] = value;
+			8'h15: keyboardMatrix[4'h4] = value;
+			8'h1D: keyboardMatrix[4'h5] = value;
+			8'h24: keyboardMatrix[4'h6] = value;
+			8'h2D: keyboardMatrix[4'hD] = value;
+			8'h1C: keyboardMatrix[4'h7] = value;
+			8'h1B: keyboardMatrix[4'h8] = value;
+			8'h23: keyboardMatrix[4'h9] = value;
+			8'h2B: keyboardMatrix[4'hE] = value;
+			8'h1A: keyboardMatrix[4'hA] = value;
+			8'h22: keyboardMatrix[4'h0] = value;
+			8'h21: keyboardMatrix[4'hB] = value;
+			8'h2A: keyboardMatrix[4'hF] = value;
 		endcase
 	end
 endtask;
@@ -226,12 +226,12 @@ ps2in Keyboard(
 
 reg kbdDown = 1;
 
-always @ (keyboardReady) begin
+always @ (posedge keyboardReady) begin
 	if (keyboardData == 8'hF0) begin
-		kbdDown <= 0;
+		kbdDown = 0;
 	end else begin
 		updateKey(.code(keyboardData), .value(kbdDown));
-		kbdDown <= 1;
+		kbdDown = 1;
 	end;
 end;
 
