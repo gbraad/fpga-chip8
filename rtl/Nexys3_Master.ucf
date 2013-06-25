@@ -123,14 +123,14 @@ NET "an<3>"          LOC = "P17" | IOSTANDARD = "LVCMOS33";   #Bank = 1, Pin nam
 
 
 ## Leds
-#NET "Led<0>"         LOC = "U16" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L2P_CMPCLK,                     Sch name = LD0
-#NET "Led<1>"         LOC = "V16" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L2N_CMPMOSI,                    Sch name = LD1
-#NET "Led<2>"         LOC = "U15" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L5P,                            Sch name = LD2
-#NET "Led<3>"         LOC = "V15" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L5N,                            Sch name = LD3
-#NET "Led<4>"         LOC = "M11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L15P,                           Sch name = LD4
-#NET "Led<5>"         LOC = "N11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L15N,                           Sch name = LD5
-#NET "Led<6>"         LOC = "R11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L16P,                           Sch name = LD6
-#NET "Led<7>"         LOC = "T11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L16N_VREF,                      Sch name = LD7
+NET "Led<0>"         LOC = "U16" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L2P_CMPCLK,                     Sch name = LD0
+NET "Led<1>"         LOC = "V16" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L2N_CMPMOSI,                    Sch name = LD1
+NET "Led<2>"         LOC = "U15" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L5P,                            Sch name = LD2
+NET "Led<3>"         LOC = "V15" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L5N,                            Sch name = LD3
+NET "Led<4>"         LOC = "M11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L15P,                           Sch name = LD4
+NET "Led<5>"         LOC = "N11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L15N,                           Sch name = LD5
+NET "Led<6>"         LOC = "R11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L16P,                           Sch name = LD6
+NET "Led<7>"         LOC = "T11" | IOSTANDARD = "LVCMOS33";   #Bank = 2, Pin name = IO_L16N_VREF,                      Sch name = LD7
 
 
 ## Switches
@@ -236,8 +236,8 @@ NET "Vsync"          LOC = "P7"  | IOSTANDARD = "LVCMOS33";   # Bank = 2, Pin na
 
 
 ## Pic USB-HID interface
-#NET "PS2KeyboardData" LOC = "J13" | IOSTANDARD = "LVCMOS33";  #Bank = 1, Pin name = IO_L39P_M1A3,                      Sch name = PIC-SDI1
-#NET "PS2KeyboardClk"  LOC = "L12" | IOSTANDARD = "LVCMOS33";  #Bank = 1, Pin name = IO_L40P_GCLK11_M1A5,               Sch name = PIC-SCK1
+NET "PS2KeyboardData" LOC = "J13" | IOSTANDARD = "LVCMOS33" | PULLUP;  #Bank = 1, Pin name = IO_L39P_M1A3,                      Sch name = PIC-SDI1
+NET "PS2KeyboardClk"  LOC = "L12" | IOSTANDARD = "LVCMOS33" | PULLUP;  #Bank = 1, Pin name = IO_L40P_GCLK11_M1A5,               Sch name = PIC-SCK1
 
 #NET "PS2MouseData"   LOC = "K14" | IOSTANDARD = "LVCMOS33";   #Bank = 1, Pin name = IO_L39N_M1ODT,                     Sch name = PIC-SDO1
 #NET "PS2MouseClk"    LOC = "L13" | IOSTANDARD = "LVCMOS33";   #Bank = 1, Pin name = IO_L40N_GCLK10_M1A6,               Sch name = PIC-SS1

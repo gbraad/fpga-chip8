@@ -5,7 +5,11 @@ module Chip8(
 	input 			clk,
 	input		[4:0]	btn,
 	input		[7:0] sw,
+
+	inout				PS2KeyboardData,
+	inout				PS2KeyboardClk,
 	
+	output	[7:0]	Led,
 	output	[2:0]	vgaRed,
 	output	[2:0]	vgaGreen,
 	output	[2:1]	vgaBlue,
@@ -176,7 +180,60 @@ BRAM_TDP_MACRO #(
 	.WEB({2{fbuf_write}})	// Input port-B write enable, width defined by Port B depth
 );
 
-// End of BRAM_TDP_MACRO_inst instantiation
+// PS/2 keyboard
+
+assign PS2KeyboardData = 1'bZ;
+assign PS2KeyboardClk = 1'bZ;
+
+wire [7:0]	keyboardData;
+wire			keyboardReady;
+reg  [15:0]	keyboardMatrix;
+
+assign Led = {keyboardMatrix[1], keyboardMatrix[4], keyboardMatrix[12], keyboardMatrix[13]};
+
+task updateKey;
+	input [7:0] code;
+	input value;
+	begin
+		case (code)
+			8'h16: keyboardMatrix[4'h1] <= value;
+			8'h1E: keyboardMatrix[4'h2] <= value;
+			8'h26: keyboardMatrix[4'h3] <= value;
+			8'h25: keyboardMatrix[4'hC] <= value;
+			8'h15: keyboardMatrix[4'h4] <= value;
+			8'h1D: keyboardMatrix[4'h5] <= value;
+			8'h24: keyboardMatrix[4'h6] <= value;
+			8'h2D: keyboardMatrix[4'hD] <= value;
+			8'h1C: keyboardMatrix[4'h7] <= value;
+			8'h1B: keyboardMatrix[4'h8] <= value;
+			8'h23: keyboardMatrix[4'h9] <= value;
+			8'h2B: keyboardMatrix[4'hE] <= value;
+			8'h1A: keyboardMatrix[4'hA] <= value;
+			8'h22: keyboardMatrix[4'h0] <= value;
+			8'h21: keyboardMatrix[4'hB] <= value;
+			8'h2A: keyboardMatrix[4'hF] <= value;
+		endcase
+	end
+endtask;
+
+ps2in Keyboard(
+	.ps2clk(PS2KeyboardClk),
+	.ps2data(PS2KeyboardData),
+	
+	.ready(keyboardReady),
+	.data(keyboardData)
+);
+
+reg kbdDown = 1;
+
+always @ (keyboardReady) begin
+	if (keyboardData == 8'hF0) begin
+		kbdDown <= 0;
+	end else begin
+		updateKey(.code(keyboardData), .value(kbdDown));
+		kbdDown <= 1;
+	end;
+end;
 
 // CPU clock 
 
@@ -292,6 +349,8 @@ cpu cpu(
 	.clk_60hz(Vsync),
 	.vsync(vgaOutside),
 	.halt((halt && sw[7]) | !blit_ready),
+	
+	.keyMatrix(keyboardMatrix),
 	
 	.ram_en(cpu_en),
 	.ram_wr(cpu_write),
