@@ -225,6 +225,13 @@ int main(int argc, char** argv)
                 oss << "LD V" << reg1 << ", [I]";
                 return oss.str();
             }
+        },
+        { 0x0000, 0x0000, [&] (int instr, int reg1, int)
+            {
+                ostringstream oss;
+                oss << "DW " << std::hex << instr;
+                return oss.str();
+            }
         }
     };
 
@@ -240,13 +247,13 @@ int main(int argc, char** argv)
         int reg1 = (instr & 0x0F00) >> 8;
         int reg2 = (instr & 0x00F0) >> 4;
 
-
         for (opcode& op : opcodes_)
             if ((op.mask & instr) == op.value)
             {
                 p.push_back(op.func(instr, reg1, reg2));
                 break;
             }
+
     }
     for (int i = 0 ; i < p.size() ; ++i)
         std::cout << "0x" << std::hex << (i*2) + 0x200 << " : "

@@ -135,96 +135,90 @@ always @ (posedge clk) begin
 			cur_instr <= instr;
 			if (!halt) begin
 				ram_en <= 0;
-				case (instr[15:12])
-					4'h0: begin
+				casez (instr)
+					16'h00EE: begin
 						pc <= stack[sp - 1];
 						sp <= sp - 1'd1;
 						state <= `STATE_SETUP_R1;
 					end
-					4'h1: begin
+					16'h1???: begin
 						pc <= instr[11:0];
 						state <= `STATE_SETUP_R1;
 					end
-					4'h2: begin
+					16'h2???: begin
 						stack[sp] <= pc;
 						sp <= sp + 1;
 						pc <= instr[11:0];
 						state <= `STATE_SETUP_R1;
 					end
-					4'h3: begin
+					16'h3???: begin
 						if (fkk == vx)
 							pc <= pc + 2;
 						state <= `STATE_SETUP_R1;
 					end
-					4'h4: begin
+					16'h4???: begin
 						if (fkk != vx)
 							pc <= pc + 2;
 						state <= `STATE_SETUP_R1;
 					end
-					4'h5: begin
+					16'h5??0: begin
 						if (vx == vy)
 							pc <= pc + 2;
 						state <= `STATE_SETUP_R1;
 					end					
-					4'h6: begin
+					16'h6???: begin
 						store_vx(fkk);
 						state <= `STATE_SETUP_R1;
 					end
-					4'h7: begin
+					16'h7???: begin
 						store_vx(vx + fkk);
 						state <= `STATE_SETUP_R1;
 					end
-					4'h8: begin
-						case (instr[3:0])
-							4'h0: begin
-								store_vx(vy);
-								state <= `STATE_SETUP_R1;
-							end
-							4'h1: begin
-								store_vx(vx | vy);
-								state <= `STATE_SETUP_R1;
-							end
-							4'h2: begin
-								store_vx(vx & vy);
-								state <= `STATE_SETUP_R1;
-							end
-							4'h3: begin
-								store_vx(vx ^ vy);
-								state <= `STATE_SETUP_R1;
-							end
-							4'h4: begin
-								store_vfvx(vx + vy + 0);
-								state <= `STATE_SETUP_R1;
-							end
-							4'h5: begin
-								store_vfvx(vx - vy + 16'h0100);
-								state <= `STATE_SETUP_R1;
-							end
-							4'h6: begin
-								store_vfvx({7'd0, vx[0], 1'd0, vx[7:1]});
-								state <= `STATE_SETUP_R1;
-							end
-							4'h7: begin
-								store_vfvx((vy - vx) ^ 9'h100);
-								state <= `STATE_SETUP_R1;
-							end
-							4'hE: begin
-								store_vfvx({7'd0, vx, 1'd0});
-								state <= `STATE_SETUP_R1;
-							end
-						endcase
+					16'h8??0: begin
+						store_vx(vy);
+						state <= `STATE_SETUP_R1;
 					end
-	//				4'h9:
-					4'hA: begin
+					16'h8??1: begin
+						store_vx(vx | vy);
+						state <= `STATE_SETUP_R1;
+					end
+					16'h8??2: begin
+						store_vx(vx & vy);
+						state <= `STATE_SETUP_R1;
+					end
+					16'h8??3: begin
+						store_vx(vx ^ vy);
+						state <= `STATE_SETUP_R1;
+					end
+					16'h8??4: begin
+						store_vfvx(vx + vy + 0);
+						state <= `STATE_SETUP_R1;
+					end
+					16'h8??5: begin
+						store_vfvx(vx - vy + 16'h0100);
+						state <= `STATE_SETUP_R1;
+					end
+					16'h8?06: begin
+						store_vfvx({7'd0, vx[0], 1'd0, vx[7:1]});
+						state <= `STATE_SETUP_R1;
+					end
+					16'h8??7: begin
+						store_vfvx((vy - vx) ^ 9'h100);
+						state <= `STATE_SETUP_R1;
+					end
+					16'h8?0E: begin
+						store_vfvx({7'd0, vx, 1'd0});
+						state <= `STATE_SETUP_R1;
+					end
+					16'hA???: begin
 						i <= instr[11:0];
 						state <= `STATE_SETUP_R1;
 					end
-	//				4'hB:
-					4'hC: begin
+					16'hC???: begin
 						store_vx(randomNumber & fkk);
 						state <= `STATE_SETUP_R1;
 					end
-					4'hD: begin
+					16'hD???: begin
 						if (vsync) begin
 							blit_op <= `BLIT_OP_SPRITE;
 							blit_src <= i;
@@ -235,50 +229,42 @@ always @ (posedge clk) begin
 							state <= `STATE_SETUP_R1;
 						end;
 					end
-					4'hE: begin
-						case (instr[7:0])
-							8'h9e: begin
-								if (keyMatrix[vx])
-									pc <= pc + 2;
-								state <= `STATE_SETUP_R1;
-							end
-							8'ha1: begin
-								if (!keyMatrix[vx])
-									pc <= pc + 2;
-								state <= `STATE_SETUP_R1;
-							end
-						endcase
+					16'hE?9E: begin
+						if (keyMatrix[vx])
+							pc <= pc + 2;
+						state <= `STATE_SETUP_R1;
 					end
-					4'hF: begin
-						case (instr[7:0])
-							8'h07: begin
-								store_vx(delay_timer);
-								state <= `STATE_SETUP_R1;
-							end
-							8'h15: begin
-								delay_timer <= vx;
-								state <= `STATE_SETUP_R1;
-							end
-							8'h18: begin
-								sound_timer <= vx;
-								state <= `STATE_SETUP_R1;
-							end
-							8'h29: begin
-								i <= {vx[3:0], 3'd0};
-								state <= `STATE_SETUP_R1;
-							end
-							8'h33: begin
-								bcd_in <= vx;
-								state <= `STATE_STORE_BCD_1;
-							end
-							8'h65: begin
-								byte_counter <= 0;
-								ram_en <= 1'd1;
-								ram_wr <= 1'd0;
-								ram_addr <= i;
-								state <= `STATE_MEM_R_WAIT;
-							end
-						endcase
+					16'hE?A1: begin
+						if (!keyMatrix[vx])
+							pc <= pc + 2;
+						state <= `STATE_SETUP_R1;
+					end
+					16'hF?07: begin
+						store_vx(delay_timer);
+						state <= `STATE_SETUP_R1;
+					end
+					16'hF?15: begin
+						delay_timer <= vx;
+						state <= `STATE_SETUP_R1;
+					end
+					16'hF?18: begin
+						sound_timer <= vx;
+						state <= `STATE_SETUP_R1;
+					end
+					16'hF?29: begin
+						i <= {vx[3:0], 3'd0};
+						state <= `STATE_SETUP_R1;
+					end
+					16'hF?33: begin
+						bcd_in <= vx;
+						state <= `STATE_STORE_BCD_1;
+					end
+					16'hF?65: begin
+						byte_counter <= 0;
+						ram_en <= 1'd1;
+						ram_wr <= 1'd0;
+						ram_addr <= i;
+						state <= `STATE_MEM_R_WAIT;
 					end
 				endcase
 			end

@@ -37,8 +37,6 @@ public class Main {
 		return sb;
 	}
 
-
-
 	private static byte[] readFile(final String fileName) throws IOException {
 		final File f = new File(fileName);
 		final byte[] b = new byte[((int) f.length() + 63) & ~63];

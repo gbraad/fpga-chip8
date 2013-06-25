@@ -425,6 +425,8 @@
     <!-- project is analyzed based on files automatically identified as       -->
     <!-- include files.                                                       -->
     <file xil_pn:name="../rtl/blitter.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../rtl/game_pong_upper.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../rtl/game_pong_lower.vh" xil_pn:type="FILE_VERILOG"/>
   </autoManagedFiles>
 
 </project>
