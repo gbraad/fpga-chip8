@@ -1,6 +1,36 @@
 `timescale 1ns / 1ps
-
 `include "blitter.vh"
+
+module CpuRegisters(
+	input				clk,
+	
+	input		[3:0]	x,
+	input		[3:0]	y,
+	input		[3:0]	d,
+	
+	output	[7:0]	vx,
+	output	[7:0]	vy,
+	
+	input				wx,
+	input		[7:0]	nx,
+	
+	input				wd,
+	input		[7:0]	nd
+);
+
+reg [7:0]	vreg[0:15];
+
+assign vx = vreg[x];
+assign vy = vreg[y];
+
+always @ (posedge clk) begin
+	if (wx)
+		vreg[x] <= nx;
+	if (wd)
+		vreg[d] <= nd;
+end;
+
+endmodule
 
 module cpu(
 
@@ -51,7 +81,6 @@ bcd bcd(
 
 reg [11:0]	pc = 12'h200;
 reg [11:0]	i = 0;
-reg [7:0]	vreg[0:15];
 reg [11:0]	stack[0:15];
 reg [4:0]	sp = 0;
 reg [7:0]	delay_timer = 0;
@@ -66,22 +95,50 @@ wire [3:0] fvx = instr[11:8];
 wire [3:0] fvy = instr[7:4];
 wire [7:0] fkk = instr[7:0];
 
-wire [7:0] vx = vreg[fvx];
-wire [7:0] vy = vreg[fvy];
+wire [7:0] vx;
+wire [7:0] vy;
 
-reg [3:0] byte_counter;
+reg x_write;
+reg [7:0] x_new;
+
+reg d_write;
+reg [7:0] d_new;
+reg [3:0] d_reg;
+
+reg [3:0] bytecounter;
+
+CpuRegisters registers(
+	.clk(clk),
+
+	.x(fvx),
+	.y(fvy),
+	
+	.vx(vx),
+	.vy(vy),
+	
+	.wx(x_write),
+	.nx(x_new),
+	
+	.wd(d_write),
+	.nd(d_new),
+	.d(d_reg)
+);
 
 task store_vx;
 	input [7:0] v;
 	begin
-		vreg[fvx] <= v;
+		x_write <= 1;
+		x_new <= v;
 	end
 endtask
 
 task store_vfvx;
 	input [15:0] v;
 	begin
-		{vreg[15], vreg[fvx]} <= v;
+		{d_new, x_new} <= v;
+		d_reg <= 15;
+		x_write <= 1;
+		d_write <= 1;
 	end
 endtask
 
@@ -118,6 +175,8 @@ always @ (posedge clk) begin
 			pc <= pc + 1'd1;
 			state <= `STATE_WAIT_R1;
 			blit_enable <= 1'd0;
+			x_write <= 0;
+			d_write <= 0;
 		end
 		`STATE_WAIT_R1: begin
 			state <= `STATE_SETUP_R2;
@@ -195,11 +254,11 @@ always @ (posedge clk) begin
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8??5: begin
-						store_vfvx(vx - vy + 16'h0100);
+						store_vfvx(vx - vy + 9'h100);
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8?06: begin
-						store_vfvx({7'd0, vx[0], 1'd0, vx[7:1]});
+						store_vfvx({vx[0], 1'd0, vx[7:1]});
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8??7: begin
@@ -207,7 +266,7 @@ always @ (posedge clk) begin
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8?0E: begin
-						store_vfvx({7'd0, vx, 1'd0});
+						store_vfvx({vx, 1'd0});
 						state <= `STATE_SETUP_R1;
 					end
 					16'hA???: begin
@@ -260,7 +319,7 @@ always @ (posedge clk) begin
 						state <= `STATE_STORE_BCD_1;
 					end
 					16'hF?65: begin
-						byte_counter <= 0;
+						bytecounter <= 0;
 						ram_en <= 1'd1;
 						ram_wr <= 1'd0;
 						ram_addr <= i;
@@ -290,13 +349,15 @@ always @ (posedge clk) begin
 			state <= `STATE_MEM_R;
 		end
 		`STATE_MEM_R: begin
-			vreg[byte_counter] <= ram_out;
-			if (byte_counter == fvx) begin
+			d_new <= ram_out;
+			d_write <= 1;
+			d_reg <= bytecounter;
+			if (bytecounter == fvx) begin
 				ram_en <= 1'd0;
 				state <= `STATE_SETUP_R1;
 			end else begin
 				ram_addr <= ram_addr + 1;
-				byte_counter <= byte_counter + 1;
+				bytecounter <= bytecounter + 1;
 				state <= `STATE_MEM_R_WAIT;
 			end;
 		end
