@@ -366,6 +366,8 @@ cpu cpu(
 	.blit_destX(blit_destX),
 	.blit_destY(blit_destY),
 	.blit_enable(blit_enable),
+	.blit_done(blit_ready),
+	.blit_collision(blit_collision),
 	
 	.cur_instr(hexdigits)
 );

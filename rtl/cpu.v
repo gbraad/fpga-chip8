@@ -10,6 +10,7 @@ module CpuRegisters(
 	
 	output	[7:0]	vx,
 	output	[7:0]	vy,
+	output	[7:0]	vd,
 	
 	input				wx,
 	input		[7:0]	nx,
@@ -22,6 +23,7 @@ reg [7:0]	vreg[0:15];
 
 assign vx = vreg[x];
 assign vy = vreg[y];
+assign vd = vreg[d];
 
 always @ (posedge clk) begin
 	if (wx)
@@ -55,6 +57,8 @@ module cpu(
 	output reg	[6:0] 	blit_destX = 0,
 	output reg	[5:0] 	blit_destY = 0,
 	output reg 				blit_enable = 0,
+	input						blit_done,
+	input						blit_collision,
 	
 	output reg	[15:0]	cur_instr = 16'h1337
 	
@@ -101,6 +105,7 @@ reg x_write;
 reg [7:0] x_new;
 
 reg d_write;
+wire [7:0] vd;
 reg [7:0] d_new;
 reg [3:0] d_reg;
 
@@ -114,6 +119,7 @@ CpuRegisters registers(
 	
 	.vx(vx),
 	.vy(vy),
+	.vd(vd),
 	
 	.wx(x_write),
 	.nx(x_new),
@@ -141,17 +147,20 @@ task store_vfvx;
 	end
 endtask
 
-`define STATE_SETUP_R1			3'd0
-`define STATE_WAIT				3'd1
-`define STATE_SETUP_R2			3'd2
-`define STATE_EXECUTE			3'd3
-`define STATE_STORE_BCD_1		3'd4
-`define STATE_STORE_BCD_2		3'd5
-`define STATE_STORE_BCD_3		3'd6
-`define STATE_MEM_R				3'd7
+`define STATE_SETUP_R1			4'd0
+`define STATE_WAIT				4'd1
+`define STATE_SETUP_R2			4'd2
+`define STATE_EXECUTE			4'd3
+`define STATE_STORE_BCD_1		4'd4
+`define STATE_STORE_BCD_2		4'd5
+`define STATE_STORE_BCD_3		4'd6
+`define STATE_MEM_R				4'd7
+`define STATE_SETUP_MEM_W		4'd8
+`define STATE_MEM_W				4'd9
+`define STATE_BLIT_RESULT		4'd10
 
-reg [2:0] state = `STATE_SETUP_R1;
-reg [2:0] nstate;
+reg [3:0] state = `STATE_SETUP_R1;
+reg [3:0] nstate;
 
 wire clk_60hz_edge;
 edge_detect clk60edge(clk, clk_60hz, clk_60hz_edge);
@@ -193,8 +202,21 @@ always @ (posedge clk) begin
 				ram_en <= 0;
 				casez (instr)
 					16'h00EE: begin
+						blit_op <= `BLIT_OP_CLEAR;
+						blit_enable <= 1'd1;
+						state <= `STATE_SETUP_R1;
+					end
+					16'h00EE: begin
 						pc <= stack[sp - 1];
 						sp <= sp - 1'd1;
+						state <= `STATE_SETUP_R1;
+					end
+					16'h00FE: begin
+						hires <= 0;
+						state <= `STATE_SETUP_R1;
+					end
+					16'h00FF: begin
+						hires <= 1;
 						state <= `STATE_SETUP_R1;
 					end
 					16'h1???: begin
@@ -276,13 +298,17 @@ always @ (posedge clk) begin
 					end
 					16'hD???: begin
 						if (vsync) begin
-							blit_op <= `BLIT_OP_SPRITE;
+							if (instr[3:0] == 0) begin
+								blit_op <= `BLIT_OP_SPRITE_16;
+							end else begin
+								blit_op <= `BLIT_OP_SPRITE;
+								blit_srcHeight <= instr[3:0];
+							end;
 							blit_src <= i;
-							blit_srcHeight <= instr[3:0];
 							blit_destX <= vx[6:0];
 							blit_destY <= vy[5:0];
 							blit_enable <= 1'd1;
-							state <= `STATE_SETUP_R1;
+							state <= `STATE_BLIT_RESULT;
 						end;
 					end
 					16'hE?9E: begin
@@ -307,13 +333,25 @@ always @ (posedge clk) begin
 						sound_timer <= vx;
 						state <= `STATE_SETUP_R1;
 					end
+					16'hF?1E: begin
+						i <= i + vx;
+						state <= `STATE_SETUP_R1;
+					end
 					16'hF?29: begin
 						i <= {vx[3:0], 3'd0};
+						state <= `STATE_SETUP_R1;
+					end
+					16'hF?30: begin
+						i <= {vx[3:0], 4'd0} + 12'd128;
 						state <= `STATE_SETUP_R1;
 					end
 					16'hF?33: begin
 						bcd_in <= vx;
 						state <= `STATE_STORE_BCD_1;
+					end
+					16'hF?55: begin
+						d_reg <= 0;
+						state <= `STATE_MEM_W;
 					end
 					16'hF?65: begin
 						bytecounter <= 0;
@@ -356,6 +394,35 @@ always @ (posedge clk) begin
 				state <= `STATE_WAIT;
 				nstate <= `STATE_MEM_R;
 			end;
+		end
+		`STATE_SETUP_MEM_W: begin
+			ram_in <= vd;
+			ram_en <= 1;
+			ram_wr <= 1;
+			ram_addr <= i;
+			
+			if (fvx == 0) begin
+				state <= `STATE_SETUP_R1;
+			end else begin
+				d_reg <= d_reg + 1'd1;
+				state <= `STATE_MEM_W;
+			end;
+		end
+		`STATE_MEM_W: begin
+			ram_addr <= ram_addr + 1'd1;
+			ram_in <= vd;
+			
+			if (d_reg == fvx) begin
+				state <= `STATE_SETUP_R1;
+			end else begin
+				d_reg <= d_reg + 1'd1;
+			end;
+		end
+		`STATE_BLIT_RESULT: if (blit_done) begin
+			d_reg <= 15;
+			d_write <= 1;
+			d_new <= blit_collision;
+			state <= `STATE_SETUP_R1;
 		end
 	endcase
 
