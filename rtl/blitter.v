@@ -55,7 +55,7 @@ begin
 		buf_write <= 0;
 		state <= `STATE_DONE;
 	end else begin
-		buf_addr <= buf_addr + 1;
+		buf_addr <= buf_addr + 1'd1;
 	end;
 end;
 endtask;
@@ -115,7 +115,7 @@ begin
 			end else if (scrollLeft) begin
 				buf_addr <= buf_addr - 1'd1;
 			end else begin
-				buf_addr <= buf_addr + 1;
+				buf_addr <= buf_addr + 1'd1;
 			end
 			buf_write <= 0;
 			subState <= `SCROLL_STATE_WAIT_READ;
@@ -279,7 +279,7 @@ begin;
 			subState <= `SPRITE_STATE_SETUP1;
 		end
 		`SPRITE_STATE_SETUP1: begin
-			cpu_addr <= cpu_addr + 1;
+			cpu_addr <= cpu_addr + 1'd1;
 			buf_addr <= buf_addr + spriteModulo;
 			buf_write <= 0;
 			

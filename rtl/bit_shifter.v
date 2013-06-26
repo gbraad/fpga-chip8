@@ -25,7 +25,7 @@ always @ (posedge clk) begin
 				{q, fifo} <= {fifo, 1'b0};
 			counter <= 0;
 		end else begin
-			counter <= counter + 1;
+			counter <= counter + 1'd1;
 		end;
 	end;
 end;

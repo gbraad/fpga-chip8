@@ -25,10 +25,10 @@ reg[3:0] vPixelCounter = 0;
 
 reg[8:0] lineAddr = 0;
 
-assign fieldPixelWidth = hires ? 128 : 64;
-assign fieldPixelHeight = hires ? 64 : 32;
-assign hPixelMult = hires ? 5 : 10;
-assign vPixelMult = hires ? 6 : 12;
+assign fieldPixelWidth = hires ? 8'd128 : 8'd64;
+assign fieldPixelHeight = hires ? 7'd64 : 7'd32;
+assign hPixelMult = hires ? 4'd5 : 4'd10;
+assign vPixelMult = hires ? 4'd6 : 4'd12;
 
 always @ (posedge clk) begin : AddressGenerator
 	if (frameStart) begin
@@ -47,7 +47,7 @@ always @ (posedge clk) begin : AddressGenerator
 	end else if (pixelEnable) begin
 		if (hPixelCounter == 0) begin
 			hPixelCounter <= {hPixelMult,4'd0} - 1'b1;
-			fbAddr <= fbAddr + 1;
+			fbAddr <= fbAddr + 1'd1;
 		end else begin
 			hPixelCounter <= hPixelCounter - 1'b1;
 		end;

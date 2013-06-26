@@ -141,14 +141,14 @@ task store_vfvx;
 	end
 endtask
 
-`define STATE_SETUP_R1			4'd0
-`define STATE_WAIT				4'd1
-`define STATE_SETUP_R2			4'd2
-`define STATE_EXECUTE			4'd3
-`define STATE_STORE_BCD_1		4'd4
-`define STATE_STORE_BCD_2		4'd5
-`define STATE_STORE_BCD_3		4'd6
-`define STATE_MEM_R				4'd7
+`define STATE_SETUP_R1			3'd0
+`define STATE_WAIT				3'd1
+`define STATE_SETUP_R2			3'd2
+`define STATE_EXECUTE			3'd3
+`define STATE_STORE_BCD_1		3'd4
+`define STATE_STORE_BCD_2		3'd5
+`define STATE_STORE_BCD_3		3'd6
+`define STATE_MEM_R				3'd7
 
 reg [2:0] state = `STATE_SETUP_R1;
 reg [2:0] nstate;
@@ -203,23 +203,23 @@ always @ (posedge clk) begin
 					end
 					16'h2???: begin
 						stack[sp] <= pc;
-						sp <= sp + 1;
+						sp <= sp + 1'd1;
 						pc <= instr[11:0];
 						state <= `STATE_SETUP_R1;
 					end
 					16'h3???: begin
 						if (fkk == vx)
-							pc <= pc + 2;
+							pc <= pc + 2'd2;
 						state <= `STATE_SETUP_R1;
 					end
 					16'h4???: begin
 						if (fkk != vx)
-							pc <= pc + 2;
+							pc <= pc + 2'd2;
 						state <= `STATE_SETUP_R1;
 					end
 					16'h5??0: begin
 						if (vx == vy)
-							pc <= pc + 2;
+							pc <= pc + 2'd2;
 						state <= `STATE_SETUP_R1;
 					end					
 					16'h6???: begin
@@ -279,20 +279,20 @@ always @ (posedge clk) begin
 							blit_op <= `BLIT_OP_SPRITE;
 							blit_src <= i;
 							blit_srcHeight <= instr[3:0];
-							blit_destX <= vx;
-							blit_destY <= vy;
+							blit_destX <= vx[6:0];
+							blit_destY <= vy[5:0];
 							blit_enable <= 1'd1;
 							state <= `STATE_SETUP_R1;
 						end;
 					end
 					16'hE?9E: begin
 						if (keyMatrix[vx])
-							pc <= pc + 2;
+							pc <= pc + 2'd2;
 						state <= `STATE_SETUP_R1;
 					end
 					16'hE?A1: begin
 						if (!keyMatrix[vx])
-							pc <= pc + 2;
+							pc <= pc + 2'd2;
 						state <= `STATE_SETUP_R1;
 					end
 					16'hF?07: begin
@@ -335,7 +335,7 @@ always @ (posedge clk) begin
 		end
 		`STATE_STORE_BCD_2: begin
 			ram_in <= bcd_out2;
-			ram_addr <= ram_addr + 1;
+			ram_addr <= ram_addr + 1'd1;
 			state <= `STATE_STORE_BCD_3;
 		end
 		`STATE_STORE_BCD_3: begin
@@ -351,8 +351,8 @@ always @ (posedge clk) begin
 				ram_en <= 1'd0;
 				state <= `STATE_SETUP_R1;
 			end else begin
-				ram_addr <= ram_addr + 1;
-				bytecounter <= bytecounter + 1;
+				ram_addr <= ram_addr + 1'd1;
+				bytecounter <= bytecounter + 1'd1;
 				state <= `STATE_WAIT;
 				nstate <= `STATE_MEM_R;
 			end;
