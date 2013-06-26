@@ -88,8 +88,7 @@ reg [7:0]	sound_timer = 0;
 
 reg [7:0] instr_buf;
 
-wire [15:0] instr;
-assign instr = {instr_buf, ram_out};
+wire [15:0] instr = {instr_buf, ram_out};
 
 wire [3:0] fvx = instr[11:8];
 wire [3:0] fvy = instr[7:4];
@@ -143,17 +142,16 @@ task store_vfvx;
 endtask
 
 `define STATE_SETUP_R1			4'd0
-`define STATE_WAIT_R1			4'd1
+`define STATE_WAIT				4'd1
 `define STATE_SETUP_R2			4'd2
-`define STATE_WAIT_R2			4'd3
-`define STATE_EXECUTE			4'd4
-`define STATE_STORE_BCD_1		4'd5
-`define STATE_STORE_BCD_2		4'd6
-`define STATE_STORE_BCD_3		4'd7
-`define STATE_MEM_R				4'd8
-`define STATE_MEM_R_WAIT		4'd9
+`define STATE_EXECUTE			4'd3
+`define STATE_STORE_BCD_1		4'd4
+`define STATE_STORE_BCD_2		4'd5
+`define STATE_STORE_BCD_3		4'd6
+`define STATE_MEM_R				4'd7
 
-reg [3:0] state = `STATE_SETUP_R1;
+reg [2:0] state = `STATE_SETUP_R1;
+reg [2:0] nstate;
 
 wire clk_60hz_edge;
 edge_detect clk60edge(clk, clk_60hz, clk_60hz_edge);
@@ -173,22 +171,21 @@ always @ (posedge clk) begin
 			ram_wr <= 0;
 			ram_addr <= pc;
 			pc <= pc + 1'd1;
-			state <= `STATE_WAIT_R1;
+			state <= `STATE_WAIT;
+			nstate <= `STATE_SETUP_R2;
 			blit_enable <= 1'd0;
 			x_write <= 0;
 			d_write <= 0;
 		end
-		`STATE_WAIT_R1: begin
-			state <= `STATE_SETUP_R2;
+		`STATE_WAIT: begin
+			state <= nstate;
 		end
 		`STATE_SETUP_R2: begin
 			instr_buf <= ram_out;
 			ram_addr <= pc;
 			pc <= pc + 1'd1;
-			state <= `STATE_WAIT_R2;
-		end
-		`STATE_WAIT_R2: begin
-			state <= `STATE_EXECUTE;
+			state <= `STATE_WAIT;
+			nstate <= `STATE_EXECUTE;
 		end
 		`STATE_EXECUTE: begin
 			cur_instr <= instr;
@@ -323,7 +320,8 @@ always @ (posedge clk) begin
 						ram_en <= 1'd1;
 						ram_wr <= 1'd0;
 						ram_addr <= i;
-						state <= `STATE_MEM_R_WAIT;
+						state <= `STATE_WAIT;
+						nstate <= `STATE_MEM_R;
 					end
 				endcase
 			end
@@ -345,9 +343,6 @@ always @ (posedge clk) begin
 			ram_en <= 0;
 			state <= `STATE_SETUP_R1;
 		end
-		`STATE_MEM_R_WAIT: begin
-			state <= `STATE_MEM_R;
-		end
 		`STATE_MEM_R: begin
 			d_new <= ram_out;
 			d_write <= 1;
@@ -358,7 +353,8 @@ always @ (posedge clk) begin
 			end else begin
 				ram_addr <= ram_addr + 1;
 				bytecounter <= bytecounter + 1;
-				state <= `STATE_MEM_R_WAIT;
+				state <= `STATE_WAIT;
+				nstate <= `STATE_MEM_R;
 			end;
 		end
 	endcase
