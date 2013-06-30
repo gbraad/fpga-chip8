@@ -86,7 +86,7 @@ bcd bcd(
 reg [11:0]	pc = 12'h200;
 reg [11:0]	i = 0;
 reg [11:0]	stack[0:15];
-reg [4:0]	sp = 0;
+reg [3:0]	sp = 0;
 reg [7:0]	delay_timer = 0;
 reg [7:0]	sound_timer = 0;
 
@@ -94,7 +94,7 @@ reg [7:0] instr_buf;
 
 wire [15:0] instr = {instr_buf, ram_out};
 
-wire [3:0] fvx = instr[11:8];
+wire [3:0] fvx = instr[15:12] == 4'hB ? 0 : instr[11:8];
 wire [3:0] fvy = instr[7:4];
 wire [7:0] fkk = instr[7:0];
 
@@ -201,7 +201,7 @@ always @ (posedge clk) begin
 			if (!halt) begin
 				ram_en <= 0;
 				casez (instr)
-					16'h00EE: begin
+					16'h00E0: begin
 						blit_op <= `BLIT_OP_CLEAR;
 						blit_enable <= 1'd1;
 						state <= `STATE_SETUP_R1;
@@ -273,7 +273,7 @@ always @ (posedge clk) begin
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8??5: begin
-						store_vfvx(vx - vy + 9'h100);
+						store_vfvx((vx - vy) ^ 9'h100);
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8?06: begin
@@ -288,8 +288,17 @@ always @ (posedge clk) begin
 						store_vfvx({vx, 1'd0});
 						state <= `STATE_SETUP_R1;
 					end
+					16'h9??0: begin
+						if (vx != vy)
+							pc <= pc + 2'd2;
+						state <= `STATE_SETUP_R1;
+					end
 					16'hA???: begin
 						i <= instr[11:0];
+						state <= `STATE_SETUP_R1;
+					end
+					16'hB???: begin
+						pc <= instr[11:0] + vx;
 						state <= `STATE_SETUP_R1;
 					end
 					16'hC???: begin
@@ -378,7 +387,7 @@ always @ (posedge clk) begin
 		end
 		`STATE_STORE_BCD_3: begin
 			ram_in <= bcd_out3;
-			ram_en <= 0;
+			ram_addr <= ram_addr + 1'd1;
 			state <= `STATE_SETUP_R1;
 		end
 		`STATE_MEM_R: begin

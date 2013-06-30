@@ -55,6 +55,8 @@ wire	[6:0] 	blit_destX;
 wire	[5:0] 	blit_destY;
 wire 				blit_enable;
 wire				blit_ready;
+wire				blit_collision;
+
 // DCM_CLKGEN: Frequency Aligned Digital Clock Manager
 //             Spartan-6
 // Xilinx HDL Language Template, version 14.5
@@ -285,6 +287,7 @@ blitter blitter(
 	.destX(blit_destX), .destY(blit_destY),
 	.enable(blit_enable),
 	.ready(blit_ready),
+	.collision(blit_collision),
 
 	.buf_out(fbuf_out),
 	.buf_addr(fbuf_addr),

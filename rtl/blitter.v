@@ -261,7 +261,7 @@ begin;
 		`SPRITE_STATE_RW1: begin
 			buf_write <= 1;
 			buf_in <= buf_out ^ spriteScrolledBitmap8[31:16];
-			collision <= collision | |(buf_out ~^ spriteScrolledBitmap8[31:16] & buf_out);
+			collision <= collision | |(spriteScrolledBitmap8[31:16] & buf_out);
 			subState <= `SPRITE_STATE_SETUP2;
 		end
 		`SPRITE_STATE_SETUP2: begin
