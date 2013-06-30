@@ -15,52 +15,61 @@ module display(
 
 wire pixel;
 
-wire[7:0] fieldPixelWidth;
-wire[6:0] fieldPixelHeight;
-wire[3:0] hPixelMult;
-wire[3:0] vPixelMult;
+wire[7:0] fieldPixelWidth = hires ? 8'd128 : 8'd64;
+wire[6:0] fieldPixelHeight = hires ? 7'd64 : 7'd32;
+wire[3:0] hPixelMult = hires ? 4'd5 : 4'd10;
+wire[3:0] vPixelMult = hires ? 4'd6 : 4'd12;
 
 reg[7:0] hPixelCounter = 0;
 reg[3:0] vPixelCounter = 0;
 
 reg[8:0] lineAddr = 0;
 
-assign fieldPixelWidth = hires ? 8'd128 : 8'd64;
-assign fieldPixelHeight = hires ? 7'd64 : 7'd32;
-assign hPixelMult = hires ? 4'd5 : 4'd10;
-assign vPixelMult = hires ? 4'd6 : 4'd12;
+wire inPlayfield = pixelY >= 48 && pixelY < 432;
 
 always @ (posedge clk) begin : AddressGenerator
 	if (frameStart) begin
 		fbAddr <= 0;
 		lineAddr <= 0;
 		vPixelCounter <= vPixelMult - 1'b1;
-	end else if (lineStart) begin
-		fbAddr <= lineAddr;
-		hPixelCounter <= 8;
-		if (vPixelCounter == 0) begin
-			vPixelCounter <= vPixelMult - 1'b1;
-			lineAddr <= lineAddr + (fieldPixelWidth >> 4);
-		end else begin
-			vPixelCounter <= vPixelCounter - 1'b1;
-		end;
-	end else if (pixelEnable) begin
-		if (hPixelCounter == 0) begin
+	end else if(inPlayfield) begin
+		if (lineStart) begin
+			fbAddr <= lineAddr;
+			if (vPixelCounter == 0) begin
+				vPixelCounter <= vPixelMult - 1'b1;
+				lineAddr <= lineAddr + (fieldPixelWidth >> 4);
+			end else begin
+				vPixelCounter <= vPixelCounter - 1'b1;
+			end;
 			hPixelCounter <= {hPixelMult,4'd0} - 1'b1;
-			fbAddr <= fbAddr + 1'd1;
-		end else begin
-			hPixelCounter <= hPixelCounter - 1'b1;
+		end else if (pixelEnable) begin
+			if (hPixelCounter == 0) begin
+				hPixelCounter <= {hPixelMult,4'd0} - 1'b1;
+			end else begin
+				if (hPixelCounter == 8)
+					fbAddr <= fbAddr + 1'd1;
+					
+				hPixelCounter <= hPixelCounter - 1'b1;
+			end;
 		end;
 	end;
 end;
 
-assign {r,g,b} = {8{pixelEnable && (pixel || pixelX == 0 || pixelY == 0 || pixelX == 639 || pixelY == 479)}};
-//assign pixel = pixelX[0] ^ pixelY[0];
+wire [1:0] color =
+	(pixelEnable) && (pixelY == 0 || pixelY == 479) ? 1 :
+	(inPlayfield && pixelEnable) ? {1'b1,pixel} :
+	0;
+
+assign {r,g,b} =
+	color == 0 ? 8'h00 :
+	color == 1 ? 8'hFF :
+	color == 2 ? {3'd6,3'd6,2'd1} :
+	{3'd3,3'd3,2'd1};
 
 bit_shifter shifter(
 	clk,
 	fbData,
-	pixelX == 0,
+	pixelX == -11'h4,
 	pixelEnable,
 	hPixelMult - 1'b1,
 	pixel);

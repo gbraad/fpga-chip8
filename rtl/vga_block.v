@@ -30,7 +30,7 @@ localparam vTotal     = 524;
 
 wire hSyncSignal;
 wire vSyncSignal;
-wire displayLineStart;
+wire displayLineStart = hPos == 0 && vPos >= vDispStart;
 
 wire[10:0] hPos, vPos;
 wire[10:0] pixelX, pixelY;
@@ -48,9 +48,7 @@ vga_sync VGASync(
 	
 assign vSync = !vSyncSignal;
 assign hSync = hSyncSignal;
-assign vOutside = vPos < vDispStart;
-
-assign displayLineStart = hPos == 0 && vPos >= vDispStart;
+assign vOutside = vPos < vDispStart + 48;
 
 display Display(
 	clk,
