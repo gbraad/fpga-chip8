@@ -360,7 +360,7 @@ always @ (posedge clk) begin
 					end
 					16'hF?55: begin
 						d_reg <= 0;
-						state <= `STATE_MEM_W;
+						state <= `STATE_SETUP_MEM_W;
 					end
 					16'hF?65: begin
 						bytecounter <= 0;
