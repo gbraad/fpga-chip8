@@ -1,6 +1,7 @@
 package main;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
 	public static void main(String[] args) throws IOException {
@@ -9,21 +10,30 @@ public class Main {
 		final byte[] lowerNibbles = new byte[nlen];
 		final byte[] upperNibbles = new byte[nlen];
 
-		for(int d = 0; d < nlen; ++d) {
-			lowerNibbles[d] = (byte)((rawData[d * 2] & 0xF) | (rawData[d * 2 + 1] << 4));
-			upperNibbles[d] = (byte)(((rawData[d * 2] >> 4) & 0xF) | (rawData[d * 2 + 1] & 0xF0));
+		for (int d = 0; d < nlen; ++d) {
+			lowerNibbles[d] = (byte) ((rawData[d * 2] & 0xF) | (rawData[d * 2 + 1] << 4));
+			upperNibbles[d] = (byte) (((rawData[d * 2] >> 4) & 0xF) | (rawData[d * 2 + 1] & 0xF0));
 		}
 
-		System.out.println("Upper nibbles:");
-		dumpArray(upperNibbles);
+		try (Writer w = openWriter(args[1] + "_upper.vh")) {
+			dumpArray(w, upperNibbles);
+			w.flush();
+		}
 
-		System.out.println("Lower nibbles:");
-		dumpArray(lowerNibbles);
+		try (Writer w = openWriter(args[1] + "_lower.vh")) {
+			dumpArray(w, lowerNibbles);
+			w.flush();
+		}
 	}
 
-	private static void dumpArray(byte[] data) {
-		for(int i = 0, line = 8; i < data.length; i += 32, ++line)
-			System.out.println(makeLine(line, data, i));
+	private static Writer openWriter(String fileName) throws FileNotFoundException {
+		OutputStream os = new FileOutputStream(fileName);
+		return new OutputStreamWriter(os, StandardCharsets.ISO_8859_1);
+	}
+
+	private static void dumpArray(Writer w, byte[] data) throws IOException {
+		for (int i = 0, line = 8; i < data.length; i += 32, ++line)
+			w.write(makeLine(line, data, i) + "\n");
 	}
 
 	private static CharSequence makeLine(int lineNumber, byte[] data, int offset) {
@@ -31,7 +41,7 @@ public class Main {
 		sb.append("\t.INIT_");
 		sb.append(String.format("%02X", lineNumber));
 		sb.append("(256'h");
-		for(int i = 31; i >= 0; --i)
+		for (int i = 31; i >= 0; --i)
 			sb.append(String.format("%02X", data[offset + i]));
 		sb.append("),");
 		return sb;
