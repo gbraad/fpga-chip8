@@ -1,0 +1,6 @@
+[submodule "rtl/util"]
+	path = rtl/util
+	url = git@bitbucket.org:csoren/fpga-util.git
+[submodule "rtl/nexys3"]
+	path = rtl/nexys3
+	url = git@bitbucket.org:csoren/fpga-nexys3.git
