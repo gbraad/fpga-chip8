@@ -273,7 +273,7 @@ always @ (posedge clk) begin
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8??5: begin
-						store_vfvx((vx - vy) ^ 9'h100);
+						store_vfvx({1'b1,vx} - vy);
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8?06: begin
@@ -281,7 +281,7 @@ always @ (posedge clk) begin
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8??7: begin
-						store_vfvx((vy - vx) ^ 9'h100);
+						store_vfvx({1'b1,vy} - vx);
 						state <= `STATE_SETUP_R1;
 					end
 					16'h8?0E: begin
