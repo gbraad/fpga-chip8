@@ -253,7 +253,7 @@ begin
 	
 	collision <= 0;
 	
-	spriteLineCount <= operation == `BLIT_OP_SPRITE_16 ? 15 : srcHeight - 1'd1;
+	spriteLineCount <= operation == `BLIT_OP_SPRITE_16 ? 4'd15 : (srcHeight - 1'd1);
 end;
 endtask;
 
