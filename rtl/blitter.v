@@ -200,8 +200,8 @@ endtask;
 `define SPRITE_STATE_WAIT2			3'd3
 `define SPRITE_STATE_RW2			3'd4
 `define SPRITE_STATE_SETUP1		3'd5
-
-reg [15:0]	spriteCarry;
+`define SPRITE_STATE_R2				3'd6
+`define SPRITE_STATE_R2_WAIT		3'd7
 
 wire [3:0]	spriteScroll;
 assign spriteScroll = destX[3:0];
@@ -227,14 +227,19 @@ assign spriteModuloHires = 7;
 wire	[8:0] spriteModulo;
 assign spriteModulo = hires ? spriteModuloHires : spriteModuloLores;
 
+reg [7:0] spriteHighByte;
+
+wire [31:0] spriteScrolledBitmap16 = {spriteHighByte, cpu_out, 16'd0} >> spriteScroll;
+
 //
 // Sprite
 //
 
 reg	[3:0] spriteLineCount;
 
-wire [31:0] spriteScrolledBitmap8;
-assign spriteScrolledBitmap8 = {cpu_out, 24'd0} >> spriteScroll;
+wire [31:0] spriteScrolledBitmap8 = {cpu_out, 24'd0} >> spriteScroll;
+
+wire [31:0] spriteScrolledBitmap = operation == `BLIT_OP_SPRITE_16 ? spriteScrolledBitmap16 : spriteScrolledBitmap8;
 
 task init_sprite;
 begin
@@ -248,7 +253,7 @@ begin
 	
 	collision <= 0;
 	
-	spriteLineCount <= srcHeight - 1'd1;
+	spriteLineCount <= operation == `BLIT_OP_SPRITE_16 ? 15 : srcHeight - 1'd1;
 end;
 endtask;
 
@@ -256,12 +261,20 @@ task run_sprite;
 begin;
 	case(subState)
 		`SPRITE_STATE_WAIT1: begin
+			subState <= operation == `BLIT_OP_SPRITE_16 ? `SPRITE_STATE_R2 : `SPRITE_STATE_RW1;
+		end
+		`SPRITE_STATE_R2: begin
+			spriteHighByte <= cpu_out;
+			cpu_addr <= cpu_addr + 1'd1;
+			subState <= `SPRITE_STATE_R2_WAIT;
+		end
+		`SPRITE_STATE_R2_WAIT: begin
 			subState <= `SPRITE_STATE_RW1;
 		end
 		`SPRITE_STATE_RW1: begin
 			buf_write <= 1;
-			buf_in <= buf_out ^ spriteScrolledBitmap8[31:16];
-			collision <= collision | |(spriteScrolledBitmap8[31:16] & buf_out);
+			buf_in <= buf_out ^ spriteScrolledBitmap[31:16];
+			collision <= collision | |(spriteScrolledBitmap[31:16] & buf_out);
 			subState <= `SPRITE_STATE_SETUP2;
 		end
 		`SPRITE_STATE_SETUP2: begin
@@ -274,8 +287,8 @@ begin;
 		end
 		`SPRITE_STATE_RW2: begin
 			buf_write <= 1;
-			buf_in <= buf_out ^ spriteScrolledBitmap8[15:0];
-			collision <= collision | |(buf_out & spriteScrolledBitmap8[15:0]);
+			buf_in <= buf_out ^ spriteScrolledBitmap[15:0];
+			collision <= collision | |(buf_out & spriteScrolledBitmap[15:0]);
 			subState <= `SPRITE_STATE_SETUP1;
 		end
 		`SPRITE_STATE_SETUP1: begin
@@ -296,6 +309,8 @@ end;
 endtask;
 
 
+
+
 //
 // Main blitter state machine
 //
@@ -313,7 +328,7 @@ always @ (posedge clk) begin
 					`BLIT_OP_SCROLL_RIGHT:	init_scroll;
 					`BLIT_OP_SCROLL_DOWN:	init_scroll_down();
 					`BLIT_OP_SPRITE:			init_sprite();
-					//`BLIT_OP_SPRITE_16:		init_sprite_16();
+					`BLIT_OP_SPRITE_16:		init_sprite();
 				endcase
 			end
 		end
@@ -325,7 +340,7 @@ always @ (posedge clk) begin
 				`BLIT_OP_SCROLL_RIGHT:	run_scroll;
 				`BLIT_OP_SCROLL_DOWN:	run_scroll_down();
 				`BLIT_OP_SPRITE:			run_sprite();
-				//`BLIT_OP_SPRITE_16:		run_sprite_16();
+				`BLIT_OP_SPRITE_16:		run_sprite();
 			endcase
 		end
 		`STATE_DONE: begin
