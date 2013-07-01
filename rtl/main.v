@@ -1,4 +1,20 @@
-`timescale 1ns / 1ps
+/* FPGA Chip-8
+	Copyright (C) 2013  Carsten Elton Sørensen
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 `include "blitter.vh"
 
 module Chip8(
@@ -9,7 +25,6 @@ module Chip8(
 	inout				PS2KeyboardData,
 	inout				PS2KeyboardClk,
 	
-	output	[7:0]	Led,
 	output	[2:0]	vgaRed,
 	output	[2:0]	vgaGreen,
 	output	[2:1]	vgaBlue,
@@ -57,9 +72,7 @@ wire 				blit_enable;
 wire				blit_ready;
 wire				blit_collision;
 
-// DCM_CLKGEN: Frequency Aligned Digital Clock Manager
-//             Spartan-6
-// Xilinx HDL Language Template, version 14.5
+// VGA clock
 
 DCM_CLKGEN #(
 	.CLKFXDV_DIVIDE(2),       // CLKFXDV divide value (2, 4, 8, 16, 32)
@@ -71,40 +84,13 @@ DCM_CLKGEN #(
 									  // "VIDEO_LINK_M0", "VIDEO_LINK_M1" or "VIDEO_LINK_M2" 
 	.STARTUP_WAIT("FALSE")    // Delay config DONE until DCM_CLKGEN LOCKED (TRUE/FALSE)
 )
-DCM_CLKGEN_inst (
+VGAClock (
 	.CLKFX(vgaClk),         // 1-bit output: Generated clock output
-	//.CLKFX180(CLKFX180), // 1-bit output: Generated clock output 180 degree out of phase from CLKFX.
-	//.CLKFXDV(CLKFXDV),   // 1-bit output: Divided clock output
-	//.LOCKED(LOCKED),     // 1-bit output: Locked output
-	//.PROGDONE(PROGDONE), // 1-bit output: Active high output to indicate the successful re-programming
-	//.STATUS(STATUS),     // 2-bit output: DCM_CLKGEN status
 	.CLKIN(clk),           // 1-bit input: Input clock
-	//.FREEZEDCM(FREEZEDCM), // 1-bit input: Prevents frequency adjustments to input clock
-	//.PROGCLK(PROGCLK),     // 1-bit input: Clock input for M/D reconfiguration
-	//.PROGDATA(PROGDATA),   // 1-bit input: Serial data input for M/D reconfiguration
-	//.PROGEN(PROGEN),       // 1-bit input: Active high program enable
 	.RST(1'b0)              // 1-bit input: Reset input pin
 );
 
-// BRAM_TDP_MACRO: True Dual Port RAM
-//                 Spartan-6
-// Xilinx HDL Language Template, version 14.5
-
-//////////////////////////////////////////////////////////////////////////
-// DATA_WIDTH_A/B | BRAM_SIZE | RAM Depth | ADDRA/B Width | WEA/B Width //
-// ===============|===========|===========|===============|=============//
-//     19-36      |  "18Kb"   |     512   |     9-bit     |    4-bit    //
-//     10-18      |  "18Kb"   |    1024   |    10-bit     |    2-bit    //
-//     10-18      |   "9Kb"   |     512   |     9-bit     |    2-bit    //
-//      5-9       |  "18Kb"   |    2048   |    11-bit     |    1-bit    //
-//      5-9       |   "9Kb"   |    1024   |    10-bit     |    1-bit    //
-//      3-4       |  "18Kb"   |    4096   |    12-bit     |    1-bit    //
-//      3-4       |   "9Kb"   |    2048   |    11-bit     |    1-bit    //
-//        2       |  "18Kb"   |    8192   |    13-bit     |    1-bit    //
-//        2       |   "9Kb"   |    4096   |    12-bit     |    1-bit    //
-//        1       |  "18Kb"   |   16384   |    14-bit     |    1-bit    //
-//        1       |   "9Kb"   |    8192   |    12-bit     |    1-bit    //
-//////////////////////////////////////////////////////////////////////////
+// VGA framebuffer
 
 BRAM_TDP_MACRO #(
 	.BRAM_SIZE("9Kb"), // Target BRAM: "9Kb" or "18Kb" 
@@ -123,46 +109,8 @@ BRAM_TDP_MACRO #(
 	.WRITE_MODE_A("WRITE_FIRST"), // "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
 	.WRITE_MODE_B("WRITE_FIRST"), // "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
 	.WRITE_WIDTH_A(16), // Valid values are 1-36
-	.WRITE_WIDTH_B(16), // Valid values are 1-36
-	.INIT_00(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_01(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_02(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_03(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_04(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_05(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_06(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_07(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_08(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_09(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_0A(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_0B(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_0C(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_0D(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_0E(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_0F(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_10(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_11(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_12(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_13(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_14(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_15(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_16(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_17(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_18(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_19(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_1A(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_1B(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_1C(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_1D(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_1E(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INIT_1F(256'h0000000000000000000000000000000000000000000000000000000000000000),
-			
-	// The next set of INITP_xx are for the parity bits
-	.INITP_00(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INITP_01(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INITP_02(256'h0000000000000000000000000000000000000000000000000000000000000000),
-	.INITP_03(256'h0000000000000000000000000000000000000000000000000000000000000000)
-) Framebuffer(
+	.WRITE_WIDTH_B(16) // Valid values are 1-36
+) VGAFramebuffer(
 	.DOA(vgabuf_out),			// Output port-A data, width defined by READ_WIDTH_A parameter
 	.ADDRA(vgabuf_addr),		// Input port-A address, width defined by Port A depth
 	.CLKA(vgaClk),				// 1-bit input port-A clock
@@ -190,8 +138,6 @@ assign PS2KeyboardClk = 1'bZ;
 wire [7:0]	keyboardData;
 wire			keyboardReady;
 reg  [15:0]	keyboardMatrix;
-
-assign Led = {keyboardMatrix[1], keyboardMatrix[4], keyboardMatrix[12], keyboardMatrix[13]};
 
 task updateKey;
 	input [7:0] code;
@@ -241,14 +187,14 @@ end;
 
 wire cpu_clk;
 
-clk_divider  #(.divider(2000)) clock50khz(
+clk_divider  #(.divider(4000)) Clock_25kHz(
 	1'b0,
 	clk,
 	cpu_clk);
 
 // CPU memory
 
-cpu_memory CpuBuffer (
+cpu_memory CPUMemory (
 	.a_clk(cpu_clk),
 	.a_en(cpu_en),
 	.a_write(cpu_write),
@@ -261,7 +207,7 @@ cpu_memory CpuBuffer (
 	.b_clk(clk)
 );
 
-vga_block vga(
+vga_block VGA(
 	.clk(vgaClk),
 	.hires(vgaHires),
 	
@@ -277,7 +223,7 @@ vga_block vga(
 	.fbData(vgabuf_out)
 );
 
-blitter blitter(
+blitter Blitter(
 	.clk(clk),
 	.hires(vgaHires),
 
@@ -301,7 +247,7 @@ blitter blitter(
 
 wire	clk_1khz;
 
-clk_divider  #(.divider(100000)) clock1khz(
+clk_divider  #(.divider(100000)) Clock_1kHz(
 	1'b0,
 	clk,
 	clk_1khz);
@@ -311,7 +257,7 @@ clk_divider  #(.divider(100000)) clock1khz(
 
 wire	[15:0]	hexdigits;
 
-hex_segment_driver hex(
+hex_segment_driver HexDriver(
 	clk_1khz,
 	hexdigits[15:12], 1'b1,
 	hexdigits[11:8], 1'b1,
@@ -323,7 +269,7 @@ hex_segment_driver hex(
 
 wire	[4:0]		btn_down, btn_down_edge;
 
-five_way_buttons buttons(
+five_way_buttons Buttons(
 	.clk(clk_1khz),
 	.but(btn),
 	.down(btn_down),
@@ -347,7 +293,7 @@ end;
 
 // CPU
 
-cpu cpu(
+cpu CPU(
 	.clk(cpu_clk),
 	.clk_60hz(Vsync),
 	.vsync(vgaOutside),
@@ -375,34 +321,4 @@ cpu cpu(
 	.cur_instr(hexdigits)
 );
 	
-/*
-always @ (posedge clk_1khz) begin
-	if (blit_ready) begin
-		blit_enable <= 0;
-		if (btn_down_edge[3]) begin
-			blit_op <= `BLIT_OP_SCROLL_DOWN;
-			blit_destY <= 1;
-			blit_enable <= 1;
-			hexdigits <= hexdigits + 1'b1;
-		end else if (btn_down_edge[4]) begin
-			blit_op <= `BLIT_OP_SCROLL_RIGHT;
-			blit_enable <= 1;
-			hexdigits <= hexdigits + 1'b1;
-		end else if (btn_down_edge[2]) begin
-			blit_op <= `BLIT_OP_SCROLL_LEFT;
-			blit_enable <= 1;
-			hexdigits <= hexdigits + 1'b1;
-		end else if (btn_down_edge[0]) begin
-			blit_op <= `BLIT_OP_SPRITE;
-			blit_src <= 0;
-			blit_srcHeight <= 5;
-			blit_destX <= 1;
-			blit_destY <= 1;
-			blit_enable <= 1;
-			hexdigits <= hexdigits + 1'b1;
-		end;
-	end;
-end;
-*/
-
 endmodule

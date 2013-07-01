@@ -1,5 +1,23 @@
-`timescale 1ns / 1ps
+/* FPGA Chip-8
+	Copyright (C) 2013  Carsten Elton Sørensen
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 `include "blitter.vh"
+
+// Register file
 
 module CpuRegisters(
 	input				clk,
@@ -34,12 +52,14 @@ end;
 
 endmodule
 
+// CPU
+
 module cpu(
 
-	input	clk,
-	input	clk_60hz,
-	input	vsync,
-	input	halt,
+	input						clk,
+	input						clk_60hz,
+	input						vsync,
+	input						halt,
 
 	input			[15:0]	keyMatrix,
 
@@ -66,7 +86,7 @@ module cpu(
 
 wire [7:0] randomNumber;
 
-rng rng(
+rng RandomNumberGenerator(
 	.clk(clk),
 	.number_o(randomNumber)
 );
@@ -76,7 +96,7 @@ wire [1:0] bcd_out1;
 wire [3:0] bcd_out2;
 wire [3:0] bcd_out3;
 
-bcd bcd(
+bcd BcdDecoder(
 	.in(bcd_in),
 	.out1(bcd_out1),
 	.out2(bcd_out2),
@@ -111,7 +131,7 @@ reg [3:0] d_reg;
 
 reg [3:0] bytecounter;
 
-CpuRegisters registers(
+CpuRegisters Registers(
 	.clk(clk),
 
 	.x(fvx),
@@ -163,7 +183,7 @@ reg [3:0] state = `STATE_SETUP_R1;
 reg [3:0] nstate;
 
 wire clk_60hz_edge;
-edge_detect clk60edge(clk, clk_60hz, clk_60hz_edge);
+edge_detect Clk60HzEdge(clk, clk_60hz, clk_60hz_edge);
 
 always @ (posedge clk) begin
 	if (clk_60hz_edge) begin
@@ -201,7 +221,7 @@ always @ (posedge clk) begin
 			if (!halt) begin
 				ram_en <= 0;
 				casez (instr)
-					16'h00E0: begin
+					16'h00E0: if (vsync) begin
 						blit_op <= `BLIT_OP_CLEAR;
 						blit_enable <= 1'd1;
 						state <= `STATE_SETUP_R1;

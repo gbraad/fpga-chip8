@@ -1,17 +1,38 @@
-`timescale 1ns / 1ps
+/* FPGA Chip-8
+	Copyright (C) 2013  Carsten Elton Sørensen
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 module display(
-	input clk,
-	input hires,
-	input pixelEnable,
-	input[10:0] pixelX, pixelY,
-	output[2:0] r,
-	output[2:0] g,
-	output[1:0] b,
-	input frameStart,
-	input lineStart,
-	output reg[8:0] fbAddr,
-	input[15:0] fbData);
+	input						clk,
+	input						hires,
+	input						pixelEnable,
+	
+	input		[10:0]		pixelX, pixelY,
+	output	[2:0]			r,
+	output	[2:0]			g,
+	output	[1:0]			b,
+	
+	input						frameStart,
+	input						lineStart,
+	
+	output reg	[8:0]		fbAddr,
+	input			[15:0]	fbData,
+	
+	output					outsidePlayfield
+);
 
 wire pixel;
 
@@ -26,6 +47,7 @@ reg[3:0] vPixelCounter = 0;
 reg[8:0] lineAddr = 0;
 
 wire inPlayfield = pixelY >= 48 && pixelY < 432;
+assign outsidePlayfield = !inPlayfield;
 
 always @ (posedge clk) begin : AddressGenerator
 	if (frameStart) begin
@@ -66,7 +88,7 @@ assign {r,g,b} =
 	color == 2 ? {3'd6,3'd6,2'd1} :
 	{3'd3,3'd3,2'd1};
 
-bit_shifter shifter(
+bit_shifter Shifter(
 	clk,
 	fbData,
 	pixelX == -11'h4,

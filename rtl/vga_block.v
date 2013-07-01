@@ -1,21 +1,40 @@
-`timescale 1ns / 1ps
+/* FPGA Chip-8
+	Copyright (C) 2013  Carsten Elton Sørensen
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 module vga_block(
-	input clk,
-	input hires,
+	// VGA clock
+	input					clk,
+	
+	// Hires or lores mode
+	input					hires,
 
 	// Output
-	output hSync,
-	output vSync,
-	output vOutside,
+	output				hSync,
+	output				vSync,
+	output				vOutside,	// high when not displaying the framebuffer
 	
-	output[2:0] r,
-	output[2:0] g,
-	output[1:0] b,
+	output	[2:0] 	r,
+	output	[2:0] 	g,
+	output	[1:0]		b,
 	
 	// Framebuffer
-	output[8:0] fbAddr,
-	input[15:0] fbData);
+	output	[8:0]		fbAddr,
+	input		[15:0]	fbData);
+
 
 // VGA configuration
 localparam hSyncStart = 16;
@@ -48,7 +67,6 @@ vga_sync VGASync(
 	
 assign vSync = !vSyncSignal;
 assign hSync = hSyncSignal;
-assign vOutside = vPos < vDispStart + 48;
 
 display Display(
 	clk,
@@ -57,6 +75,7 @@ display Display(
 	pixelX, pixelY,
 	r, g, b,
 	vSyncSignal, displayLineStart,
-	fbAddr, fbData);
+	fbAddr, fbData,
+	vOutside);
 
 endmodule
