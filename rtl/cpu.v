@@ -304,7 +304,7 @@ always @ (posedge clk) begin
 						store_vfvx({1'b1,vy} - vx);
 						state <= `STATE_SETUP_R1;
 					end
-					16'h8?0E: begin
+					16'h8??E: begin
 						store_vfvx({vx, 1'd0});
 						state <= `STATE_SETUP_R1;
 					end

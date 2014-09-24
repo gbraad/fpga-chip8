@@ -92,42 +92,17 @@ VGAClock (
 
 // VGA framebuffer
 
-BRAM_TDP_MACRO #(
-	.BRAM_SIZE("9Kb"), // Target BRAM: "9Kb" or "18Kb" 
-	.DEVICE("SPARTAN6"), // Target device: "VIRTEX5", "VIRTEX6", "SPARTAN6" 
-	.DOA_REG(0),        // Optional port A output register (0 or 1)
-	.DOB_REG(0),        // Optional port B output register (0 or 1)
-	.INIT_A(36'h0000000),  // Initial values on port A output port
-	.INIT_B(36'h00000000), // Initial values on port B output port
-	.INIT_FILE ("NONE"),
-	.READ_WIDTH_A (16),   // Valid values are 1-36
-	.READ_WIDTH_B (16),   // Valid values are 1-36
-	.SIM_COLLISION_CHECK ("ALL"), // Collision check enable "ALL", "WARNING_ONLY", 
-											//   "GENERATE_X_ONLY" or "NONE" 
-	.SRVAL_A(36'h00000000), // Set/Reset value for port A output
-	.SRVAL_B(36'h00000000), // Set/Reset value for port B output
-	.WRITE_MODE_A("WRITE_FIRST"), // "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
-	.WRITE_MODE_B("WRITE_FIRST"), // "WRITE_FIRST", "READ_FIRST", or "NO_CHANGE" 
-	.WRITE_WIDTH_A(16), // Valid values are 1-36
-	.WRITE_WIDTH_B(16) // Valid values are 1-36
-) VGAFramebuffer(
-	.DOA(vgabuf_out),			// Output port-A data, width defined by READ_WIDTH_A parameter
-	.ADDRA(vgabuf_addr),		// Input port-A address, width defined by Port A depth
-	.CLKA(vgaClk),				// 1-bit input port-A clock
-	.DIA(16'd0),				// Input port-A data, width defined by WRITE_WIDTH_A parameter
-	.ENA(1'b1),					// 1-bit input port-A enable
-	.REGCEA(1'b0),				// 1-bit input port-A output register enable
-	.RSTA(1'b0),				// 1-bit input port-A reset
-	.WEA(2'b0),					// Input port-A write enable, width defined by Port A depth
+framebuffer VGAFramebuffer(
+	vgaClk,
+	vgabuf_addr,
+	vgabuf_out,
 
-	.DOB(fbuf_out),			// Output port-B data, width defined by READ_WIDTH_B parameter
-	.ADDRB(fbuf_addr),		// Input port-B address, width defined by Port B depth
-	.CLKB(clk),					// 1-bit input port-B clock
-	.DIB(fbuf_in),				// Input port-B data, width defined by WRITE_WIDTH_B parameter
-	.ENB(fbuf_en),				// 1-bit input port-B enable
-	.REGCEB(1'b0),				// 1-bit input port-B output register enable
-	.RSTB(1'b0),				// 1-bit input port-B reset
-	.WEB({2{fbuf_write}})	// Input port-B write enable, width defined by Port B depth
+	clk,
+	fbuf_en,
+	fbuf_write,
+	fbuf_addr,
+	fbuf_in,
+	fbuf_out
 );
 
 // PS/2 keyboard
