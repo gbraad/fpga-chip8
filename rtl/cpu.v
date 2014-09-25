@@ -52,6 +52,8 @@ end;
 
 endmodule
 
+reg [7:0]	rpl[0:7];
+
 // CPU
 
 module cpu(
@@ -178,6 +180,8 @@ endtask
 `define STATE_SETUP_MEM_W		4'd8
 `define STATE_MEM_W				4'd9
 `define STATE_BLIT_RESULT		4'd10
+`define STATE_RPL_R				4'd11
+`define STATE_RPL_W				4'd12
 
 reg [3:0] state = `STATE_SETUP_R1;
 reg [3:0] nstate;
@@ -221,7 +225,13 @@ always @ (posedge clk) begin
 			if (!halt) begin
 				ram_en <= 0;
 				casez (instr)
-					16'h00E0: if (vsync) begin
+					16'h00C?: if (vsync && blit_done) begin
+						blit_op <= `BLIT_OP_SCROLL_DOWN;
+						blit_destY <= instr[3:0];
+						blit_enable <= 1'd1;
+						state <= `STATE_SETUP_R1;
+					end
+					16'h00E0: if (vsync && blit_done) begin
 						blit_op <= `BLIT_OP_CLEAR;
 						blit_enable <= 1'd1;
 						state <= `STATE_SETUP_R1;
@@ -230,6 +240,19 @@ always @ (posedge clk) begin
 						pc <= stack[sp - 1];
 						sp <= sp - 1'd1;
 						state <= `STATE_SETUP_R1;
+					end
+					16'h00FB: if (vsync && blit_done) begin
+						blit_op <= `BLIT_OP_SCROLL_RIGHT;
+						blit_enable <= 1'd1;
+						state <= `STATE_SETUP_R1;
+					end
+					16'h00FC: if (vsync && blit_done) begin
+						blit_op <= `BLIT_OP_SCROLL_LEFT;
+						blit_enable <= 1'd1;
+						state <= `STATE_SETUP_R1;
+					end
+					16'h00FD: begin
+						// exit interpreter - do nothing (wait for user reset)
 					end
 					16'h00FE: begin
 						hires <= 0;
@@ -296,7 +319,7 @@ always @ (posedge clk) begin
 						store_vfvx({1'b1,vx} - vy);
 						state <= `STATE_SETUP_R1;
 					end
-					16'h8?06: begin
+					16'h8??6: begin
 						store_vfvx({vx[0], 1'd0, vx[7:1]});
 						state <= `STATE_SETUP_R1;
 					end
@@ -326,7 +349,7 @@ always @ (posedge clk) begin
 						state <= `STATE_SETUP_R1;
 					end
 					16'hD???: begin
-						if (vsync) begin
+						if (/*vsync &&*/ blit_done) begin
 							if (instr[3:0] == 0) begin
 								blit_op <= `BLIT_OP_SPRITE_16;
 							end else begin
@@ -390,8 +413,35 @@ always @ (posedge clk) begin
 						state <= `STATE_WAIT;
 						nstate <= `STATE_MEM_R;
 					end
+					16'hF?75: if (fvx[3] == 0) begin
+						d_write <= 0;
+						d_reg <= 0;
+						state <= `STATE_RPL_W;
+					end
+					16'hF?85: if (fvx[3] == 0) begin
+						d_reg <= 0;
+						state <= `STATE_RPL_R;
+					end
 				endcase
 			end
+		end
+		`STATE_RPL_W: begin
+			rpl[d_reg] <= vd;
+			
+			if (fvx[2:0] == d_reg)
+				state <= `STATE_SETUP_R1;
+			else begin
+				d_reg <= d_reg + 1;
+			end
+		end
+		`STATE_RPL_R: begin
+			d_new <= rpl[d_reg];
+			d_write <= 1;
+			
+			if (fvx[2:0] == d_reg)
+				state <= `STATE_SETUP_R1;
+			else
+				d_reg <= d_reg + 1;
 		end
 		`STATE_STORE_BCD_1: begin
 			ram_en <= 1'd1;

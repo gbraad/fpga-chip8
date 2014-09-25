@@ -162,7 +162,7 @@ end;
 
 wire cpu_clk;
 
-clk_divider  #(.divider(4000)) Clock_25kHz(
+clk_divider  #(.divider(5000)) Clock_20kHz(
 	1'b0,
 	clk,
 	cpu_clk);
