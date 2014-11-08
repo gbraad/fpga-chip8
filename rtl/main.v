@@ -104,11 +104,11 @@ wire halt = !(run && !run_prev);
 
 always @ (posedge cpu_clk) begin
 	run_prev <= run;
-end;
+end
 
 always @ (posedge clk_1khz) begin
 	run <= btn_down_edge[0];
-end;
+end
 
 chip8 chip8machine(
 	vgaClk,

@@ -1,5 +1,5 @@
 /* FPGA Util library
-	Copyright (C) 2013  Carsten Elton Sørensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -44,6 +44,6 @@ always @ (posedge clk) begin
 			counter <= counter + 1'd1;
 		end;
 	end;
-end;
+end
 
 endmodule

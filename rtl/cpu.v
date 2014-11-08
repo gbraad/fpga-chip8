@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sørensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ always @ (posedge clk) begin
 		vreg[x] <= nx;
 	if (wd)
 		vreg[d] <= nd;
-end;
+end
 
 endmodule
 
@@ -505,6 +505,6 @@ always @ (posedge clk) begin
 		end
 	endcase
 
-end;
+end
 
 endmodule

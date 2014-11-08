@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sørensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ always @ (posedge clk) begin : AddressGenerator
 			end;
 		end;
 	end;
-end;
+end
 
 wire [1:0] color =
 	(pixelEnable) && (pixelY == 0 || pixelY == 479) ? 1 :

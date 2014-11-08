@@ -19,7 +19,7 @@
 
 module mist_top(
 	// 27 MHz clocks
-	input [1:0] CLOCK_27,
+	input	[1:0]		CLOCK_27,
 	
 	// VGA
 	output			VGA_HS,
@@ -28,6 +28,45 @@ module mist_top(
 	output [5:0]	VGA_G,
 	output [5:0]	VGA_B
 );
+
+wire clk_100M;
+wire clk_25M;
+wire cpu_clk;
+
+mist_pll	mist_pll_inst (
+//	.areset ( areset_sig ),
+	.inclk0 ( CLOCK_27[0] ),
+	.c0 ( clk_100M ),
+	.c1 ( clk_25M ),
+//	.locked ( locked_sig )
+);
+
+clk_divider  #(.divider(5000)) Clock_20kHz(
+	1'b0,
+	clk_100M,
+	cpu_clk
+);
+
+// Chip-8 machine
+
+wire [15:0] current_opcode;
+
+chip8 chip8machine(
+	clk_25M,
+	cpu_clk,
+	clk_100M,
+	
+	1'b0,
+	
+	VGA_HS, VGA_VS,
+	VGA_R[5:3], VGA_G[5:3], VGA_B[5:4],
+	
+	current_opcode,
+	
+	1'b0, 1'b0
+);
+
+
 
 
 endmodule

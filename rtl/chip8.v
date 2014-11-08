@@ -116,7 +116,7 @@ task updateKey;
 			8'h2A: keyboardMatrix[4'hF] = value;
 		endcase
 	end
-endtask;
+endtask
 
 ps2in Keyboard(
 	.ps2clk(PS2KeyboardClk),
@@ -132,10 +132,10 @@ always @ (posedge keyboardReady) begin
 	if (keyboardData == 8'hF0) begin
 		kbdDown = 0;
 	end else begin
-		updateKey(.code(keyboardData), .value(kbdDown));
+		updateKey(keyboardData, kbdDown);
 		kbdDown = 1;
 	end;
-end;
+end
 
 // CPU memory
 

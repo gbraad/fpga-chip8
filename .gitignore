@@ -1,3 +1,6 @@
 out/
 db/
 xilinx/iseconfig/
+output_files/
+incremental_db/
+rtl/greybox_tmp/
