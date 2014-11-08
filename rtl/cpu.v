@@ -52,8 +52,6 @@ end;
 
 endmodule
 
-reg [7:0]	rpl[0:7];
-
 // CPU
 
 module cpu(
@@ -85,6 +83,8 @@ module cpu(
 	output reg	[15:0]	cur_instr = 16'h1337
 	
 );
+
+reg [7:0]	rpl[0:7];
 
 wire [7:0] randomNumber;
 
