@@ -16,9 +16,9 @@
 */
 
 module framebuffer(
-	input             vgaClk,
-	input  [8:0]      vgabuf_addr,
-	output reg [15:0] vgabuf_out,
+	input             vga_clk,
+	input  [8:0]      vga_addr,
+	output reg [15:0] vga_out,
 
 	input             clk,
 	input             fbuf_en,
@@ -30,8 +30,8 @@ module framebuffer(
 
 reg [15:0] ram [0:511];
 
-always @(posedge vgaClk)
-	vgabuf_out <= ram[vgabuf_addr];
+always @(posedge vga_clk)
+	vga_out <= ram[vga_addr];
 	
 always @(posedge clk) begin
 	if (fbuf_en) begin
