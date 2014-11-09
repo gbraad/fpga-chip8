@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sørensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -35,9 +35,9 @@ reg [7:0] ram [0:4095];
 initial begin
 	$readmemh("font_small.vh", ram, 0, 128 - 1);
 	$readmemh("font_large.vh", ram, 128, 128 + 160 - 1);
-//	$readmemh("../games/ant.vh", ram, 512);
+	$readmemh("../games/ant.vh", ram, 512);
 //	$readmemh("../games/alien.vh", ram, 512);
-	$readmemh("../games/blinky.vh", ram, 512);
+//	$readmemh("../games/blinky.vh", ram, 512);
 //	$readmemh("../games/car.vh", ram, 512);
 //	$readmemh("../games/field.vh", ram, 512);
 //	$readmemh("../games/hpiper.vh", ram, 512);
@@ -48,7 +48,8 @@ end
 
 always @(posedge a_clk) begin
 	if (a_en) begin
-		if (a_write) begin
+		// Write protect the lower 512 bytes (charset)
+		if (a_write && |a_addr[11:9]) begin
 			ram[a_addr] <= a_in;
 		end
 		a_out <= ram[a_addr];

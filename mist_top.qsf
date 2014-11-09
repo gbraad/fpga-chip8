@@ -338,6 +338,8 @@ set_global_assignment -name PARTITION_COLOR 2147039 -section_id Top
 set_global_assignment -name ENABLE_SIGNALTAP ON
 set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
 
+set_global_assignment -name VERILOG_FILE rtl/mist/osd.v
+set_global_assignment -name VERILOG_FILE rtl/mist/user_io.v
 set_global_assignment -name VERILOG_FILE rtl/framebuffer.v
 set_global_assignment -name VERILOG_FILE rtl/chip8.v
 set_global_assignment -name VERILOG_FILE rtl/util/vga_sync.v
