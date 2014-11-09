@@ -16,22 +16,27 @@
 */
 
 module chip8(
-	input vgaClk,	 // 25.152.000 Hz clock
-	input cpu_clk,	 // 20.000 Hz clock
-	input blit_clk, // 100.000.000 Hz clock, or as fast as it can get
+	input		vgaClk,	 // 25.152.000 Hz clock
+	input		cpu_clk,	 // 20.000 Hz clock
+	input		blit_clk, // 100.000.000 Hz clock, or as fast as it can get
 	
-	input cpu_halt,
+	input		cpu_halt,
 	
-	output Hsync,
-	output Vsync,
-	output	[2:0]	vgaRed,
-	output	[2:0]	vgaGreen,
-	output	[2:1]	vgaBlue,
+	output			Hsync,
+	output			Vsync,
+	output [2:0]	vgaRed,
+	output [2:0]	vgaGreen,
+	output [2:1]	vgaBlue,
 	
-	output [15:0] currentOpcode,
+	output [15:0]	currentOpcode,
 	
 	input PS2KeyboardData,
-	input PS2KeyboardClk
+	input PS2KeyboardClk,
+	
+	input				upload_en,
+	input				upload_clk,
+	input [7:0]		upload_data,
+	input [11:0]	upload_addr
 );
 
 wire			vgaHires;
@@ -140,12 +145,12 @@ end
 // CPU memory
 
 cpu_memory CPUMemory (
-	.a_clk(cpu_clk),
-	.a_en(cpu_en),
-	.a_write(cpu_write),
-	.a_out(cpu_out),
-	.a_in(cpu_in),
-	.a_addr(cpu_addr),
+	.a_clk  (upload_en ? upload_clk : cpu_clk),
+	.a_en   (upload_en | cpu_en),
+	.a_write(upload_en ? 1'b1 : cpu_write),
+	.a_out  (cpu_out),
+	.a_in   (upload_en ? upload_data : cpu_in),
+	.a_addr (upload_en ? upload_addr : cpu_addr),
 	
 	.b_out(cbuf_out),
 	.b_addr(cbuf_addr),
@@ -196,7 +201,7 @@ cpu CPU(
 	.clk(cpu_clk),
 	.clk_60hz(Vsync),
 	.vsync(vgaOutside),
-	.halt(cpu_halt || !blit_ready),
+	.halt(cpu_halt || !blit_ready || upload_en),
 	
 	.keyMatrix(keyboardMatrix),
 	

@@ -30,7 +30,7 @@ module user_io #(parameter STRLEN=0) (
 	output     		reg SPI_MISO,
 	input      		SPI_MOSI,
     
-  input [7:0] 	core_type,
+	input [7:0] 	core_type,
 	
 	output [5:0] 	JOY0,
 	output [5:0] 	JOY1,

@@ -62,9 +62,29 @@ clk_divider  #(.divider(5000)) Clock_20kHz(
 	cpu_clk
 );
 
-//wire [1:0] buttons;
+// Program uploader
 
-//assign LED = |buttons;
+wire uploading;
+wire upload_clk;
+wire upload_en;
+wire [11:0] upload_a;
+wire [7:0] upload_d;
+
+data_io DataIO(
+	SPI_SCK,
+	SPI_SS2,
+	SPI_DI,
+	
+	uploading,
+	upload_clk,
+	upload_en,
+	upload_a,
+	upload_d
+);
+
+wire [1:0] buttons;
+
+assign LED = !uploading;
 
 wire ps2_data;
 wire ps2_clk;
@@ -85,7 +105,7 @@ user_io #(.STRLEN(9 + 20)) UserIO(
 	.core_type(8'ha4),
 	
 //   .SWITCHES      (switches         ),
-//	.BUTTONS       (buttons          ),
+	.BUTTONS       (buttons          ),
 
 //   .JOY0          (joyA             ),
 //   .JOY1          (joyB             ),
