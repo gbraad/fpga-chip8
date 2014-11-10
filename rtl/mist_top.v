@@ -52,12 +52,12 @@ mist_pll	mist_pll_inst (
 	.inclk0 ( CLOCK_27[0] ),
 	.c0 ( clk_100M ),
 	.c1 ( clk_25M ),
-	.c2 ( clk_12k ),
+	.c2 ( clk_12k )
 //	.locked ( locked_sig )
 );
 
 clk_divider  #(.divider(5000)) Clock_20kHz(
-	1'b0,
+	res,
 	clk_100M,
 	cpu_clk
 );
@@ -82,9 +82,8 @@ data_io DataIO(
 	upload_d
 );
 
-wire [1:0] buttons;
 
-assign LED = !uploading;
+// User IO handler
 
 wire ps2_data;
 wire ps2_clk;
@@ -93,6 +92,8 @@ localparam CONF_STR = {
 	"Chip;CH8;",
 	"O1,Monitor,4:3,16:9;"
 };
+
+wire [1:0] buttons;
 
 user_io #(.STRLEN(9 + 20)) UserIO(
 	.conf_str		(CONF_STR			),
@@ -117,13 +118,47 @@ user_io #(.STRLEN(9 + 20)) UserIO(
    .ps2_clk       (ps2_clk          )
 );
 
+
+// Reset circuit
+
+wire uploading_negedge;
+util_negedge UploadingNegedge(cpu_clk, 0, uploading, uploading_negedge);
+
+wire button1_negedge;
+util_negedge ButtonNegedge(cpu_clk, 0, buttons[1], button1_negedge);
+
+reg res = 0;
+reg [3:0] res_count = 0;
+
+always @(posedge cpu_clk) begin
+	if (res) begin
+		if (&res_count) begin
+			res <= 0;
+			res_count <= 0;
+		end else begin
+			res_count <= res_count + 1'b1;
+		end;
+	end else if (uploading_negedge || button1_negedge) begin
+		res <= 1'b1;
+	end;
+end
+
+
+// Show some activity while uploading
+
+//assign LED = !uploading;
+assign LED = buttons[1];
+
+
+// OSD
+
 wire [5:0] chip8_R;
 wire [5:0] chip8_G;
 wire [5:0] chip8_B;
 wire chip8_hs;
 wire chip8_vs;
 
-osd #(15,0,5) OSD(
+osd OSD(
 	clk_25M,
 	
 	SPI_SCK,
@@ -142,21 +177,26 @@ osd #(15,0,5) OSD(
 wire [15:0] current_opcode;
 
 chip8 chip8machine(
+	res,
+	
 	clk_25M,
 	cpu_clk,
 	clk_100M,
 	
-	1'b0,
+	uploading,
 	
 	chip8_hs, chip8_vs,
 	chip8_R[5:3], chip8_G[5:3], chip8_B[5:4],
 	
 	current_opcode,
 	
-	ps2_data, ps2_clk
+	ps2_data, ps2_clk,
+	
+	uploading && upload_en,
+	upload_clk,
+	upload_a,
+	upload_d
 );
-
-
 
 
 endmodule

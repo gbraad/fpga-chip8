@@ -55,6 +55,7 @@ endmodule
 // CPU
 
 module cpu(
+	input						res,
 
 	input						clk,
 	input						clk_60hz,
@@ -190,321 +191,333 @@ wire clk_60hz_edge;
 edge_detect Clk60HzEdge(clk, clk_60hz, clk_60hz_edge);
 
 always @ (posedge clk) begin
-	if (clk_60hz_edge) begin
-		if (delay_timer != 0)
-			delay_timer <= delay_timer - 1'd1;
-		
-		if (sound_timer != 0)
-			sound_timer <= sound_timer - 1'd1;
-	end;
-	
-	case (state)
-		`STATE_SETUP_R1: begin
-			ram_en <= 1;
-			ram_wr <= 0;
-			ram_addr <= pc;
-			pc <= pc + 1'd1;
-			state <= `STATE_WAIT;
-			nstate <= `STATE_SETUP_R2;
-			blit_enable <= 1'd0;
-			x_write <= 0;
-			d_write <= 0;
-		end
-		`STATE_WAIT: begin
-			state <= nstate;
-		end
-		`STATE_SETUP_R2: begin
-			instr_buf <= ram_out;
-			ram_addr <= pc;
-			pc <= pc + 1'd1;
-			state <= `STATE_WAIT;
-			nstate <= `STATE_EXECUTE;
-		end
-		`STATE_EXECUTE: begin
-			cur_instr <= instr;
-			if (!halt) begin
-				ram_en <= 0;
-				casez (instr)
-					16'h00C?: if (vsync && blit_done) begin
-						blit_op <= `BLIT_OP_SCROLL_DOWN;
-						blit_destY <= instr[3:0];
-						blit_enable <= 1'd1;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h00E0: if (vsync && blit_done) begin
-						blit_op <= `BLIT_OP_CLEAR;
-						blit_enable <= 1'd1;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h00EE: begin
-						pc <= stack[sp - 1];
-						sp <= sp - 1'd1;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h00FB: if (vsync && blit_done) begin
-						blit_op <= `BLIT_OP_SCROLL_RIGHT;
-						blit_enable <= 1'd1;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h00FC: if (vsync && blit_done) begin
-						blit_op <= `BLIT_OP_SCROLL_LEFT;
-						blit_enable <= 1'd1;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h00FD: begin
-						// exit interpreter - do nothing (wait for user reset)
-					end
-					16'h00FE: begin
-						hires <= 0;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h00FF: begin
-						hires <= 1;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h1???: begin
-						pc <= instr[11:0];
-						state <= `STATE_SETUP_R1;
-					end
-					16'h2???: begin
-						stack[sp] <= pc;
-						sp <= sp + 1'd1;
-						pc <= instr[11:0];
-						state <= `STATE_SETUP_R1;
-					end
-					16'h3???: begin
-						if (fkk == vx)
-							pc <= pc + 2'd2;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h4???: begin
-						if (fkk != vx)
-							pc <= pc + 2'd2;
-						state <= `STATE_SETUP_R1;
-					end
-					16'h5??0: begin
-						if (vx == vy)
-							pc <= pc + 2'd2;
-						state <= `STATE_SETUP_R1;
-					end					
-					16'h6???: begin
-						store_vx(fkk);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h7???: begin
-						store_vx(vx + fkk);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??0: begin
-						store_vx(vy);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??1: begin
-						store_vx(vx | vy);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??2: begin
-						store_vx(vx & vy);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??3: begin
-						store_vx(vx ^ vy);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??4: begin
-						store_vfvx(vx + vy + 0);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??5: begin
-						store_vfvx({1'b1,vx} - vy);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??6: begin
-						store_vfvx({vx[0], 1'd0, vx[7:1]});
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??7: begin
-						store_vfvx({1'b1,vy} - vx);
-						state <= `STATE_SETUP_R1;
-					end
-					16'h8??E: begin
-						store_vfvx({vx, 1'd0});
-						state <= `STATE_SETUP_R1;
-					end
-					16'h9??0: begin
-						if (vx != vy)
-							pc <= pc + 2'd2;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hA???: begin
-						i <= instr[11:0];
-						state <= `STATE_SETUP_R1;
-					end
-					16'hB???: begin
-						pc <= instr[11:0] + vx;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hC???: begin
-						store_vx(randomNumber & fkk);
-						state <= `STATE_SETUP_R1;
-					end
-					16'hD???: begin
-						if (/*vsync &&*/ blit_done) begin
-							if (instr[3:0] == 0) begin
-								blit_op <= `BLIT_OP_SPRITE_16;
-							end else begin
-								blit_op <= `BLIT_OP_SPRITE;
-								blit_srcHeight <= instr[3:0];
-							end;
-							blit_src <= i;
-							blit_destX <= vx[6:0];
-							blit_destY <= vy[5:0];
-							blit_enable <= 1'd1;
-							state <= `STATE_BLIT_RESULT;
-						end;
-					end
-					16'hE?9E: begin
-						if (keyMatrix[vx])
-							pc <= pc + 2'd2;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hE?A1: begin
-						if (!keyMatrix[vx])
-							pc <= pc + 2'd2;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hF?07: begin
-						store_vx(delay_timer);
-						state <= `STATE_SETUP_R1;
-					end
-					16'hF?15: begin
-						delay_timer <= vx;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hF?18: begin
-						sound_timer <= vx;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hF?1E: begin
-						i <= i + vx;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hF?29: begin
-						i <= {vx[3:0], 3'd0};
-						state <= `STATE_SETUP_R1;
-					end
-					16'hF?30: begin
-						i <= {vx[3:0], 4'd0} + 12'd128;
-						state <= `STATE_SETUP_R1;
-					end
-					16'hF?33: begin
-						bcd_in <= vx;
-						state <= `STATE_STORE_BCD_1;
-					end
-					16'hF?55: begin
-						d_reg <= 0;
-						state <= `STATE_SETUP_MEM_W;
-					end
-					16'hF?65: begin
-						bytecounter <= 0;
-						ram_en <= 1'd1;
-						ram_wr <= 1'd0;
-						ram_addr <= i;
-						state <= `STATE_WAIT;
-						nstate <= `STATE_MEM_R;
-					end
-					16'hF?75: if (fvx[3] == 0) begin
-						d_write <= 0;
-						d_reg <= 0;
-						state <= `STATE_RPL_W;
-					end
-					16'hF?85: if (fvx[3] == 0) begin
-						d_reg <= 0;
-						state <= `STATE_RPL_R;
-					end
-				endcase
-			end
-		end
-		`STATE_RPL_W: begin
-			rpl[d_reg] <= vd;
+	if (res) begin
+		delay_timer <= 0;
+		sound_timer <= 0;
+		state <= `STATE_SETUP_R1;
+		nstate <= `STATE_SETUP_R1;
+		x_write <= 0;
+		d_write <= 0;
+		sp <= 0;
+		i <= 0;
+		pc <= 12'h200;
+		bytecounter <= 0;
+	end else begin
+		if (clk_60hz_edge) begin
+			if (delay_timer != 0)
+				delay_timer <= delay_timer - 1'd1;
 			
-			if (fvx[2:0] == d_reg)
-				state <= `STATE_SETUP_R1;
-			else begin
-				d_reg <= d_reg + 1;
-			end
-		end
-		`STATE_RPL_R: begin
-			d_new <= rpl[d_reg];
-			d_write <= 1;
-			
-			if (fvx[2:0] == d_reg)
-				state <= `STATE_SETUP_R1;
-			else
-				d_reg <= d_reg + 1;
-		end
-		`STATE_STORE_BCD_1: begin
-			ram_en <= 1'd1;
-			ram_wr <= 1'd1;
-			ram_in <= bcd_out1;
-			ram_addr <= i;
-			state <= `STATE_STORE_BCD_2;
-		end
-		`STATE_STORE_BCD_2: begin
-			ram_in <= bcd_out2;
-			ram_addr <= ram_addr + 1'd1;
-			state <= `STATE_STORE_BCD_3;
-		end
-		`STATE_STORE_BCD_3: begin
-			ram_in <= bcd_out3;
-			ram_addr <= ram_addr + 1'd1;
-			state <= `STATE_SETUP_R1;
-		end
-		`STATE_MEM_R: begin
-			d_new <= ram_out;
-			d_write <= 1;
-			d_reg <= bytecounter;
-			if (bytecounter == fvx) begin
-				ram_en <= 1'd0;
-				state <= `STATE_SETUP_R1;
-			end else begin
-				ram_addr <= ram_addr + 1'd1;
-				bytecounter <= bytecounter + 1'd1;
-				state <= `STATE_WAIT;
-				nstate <= `STATE_MEM_R;
-			end;
-		end
-		`STATE_SETUP_MEM_W: begin
-			ram_in <= vd;
-			ram_en <= 1;
-			ram_wr <= 1;
-			ram_addr <= i;
-			
-			if (fvx == 0) begin
-				state <= `STATE_SETUP_R1;
-			end else begin
-				d_reg <= d_reg + 1'd1;
-				state <= `STATE_MEM_W;
-			end;
-		end
-		`STATE_MEM_W: begin
-			ram_addr <= ram_addr + 1'd1;
-			ram_in <= vd;
-			
-			if (d_reg == fvx) begin
-				state <= `STATE_SETUP_R1;
-			end else begin
-				d_reg <= d_reg + 1'd1;
-			end;
-		end
-		`STATE_BLIT_RESULT: if (blit_done) begin
-			d_reg <= 15;
-			d_write <= 1;
-			d_new <= blit_collision;
-			state <= `STATE_SETUP_R1;
-		end
-	endcase
+			if (sound_timer != 0)
+				sound_timer <= sound_timer - 1'd1;
+		end;
 
+		case (state)
+			`STATE_SETUP_R1: begin
+				ram_en <= 1;
+				ram_wr <= 0;
+				ram_addr <= pc;
+				pc <= pc + 1'd1;
+				state <= `STATE_WAIT;
+				nstate <= `STATE_SETUP_R2;
+				blit_enable <= 1'd0;
+				x_write <= 0;
+				d_write <= 0;
+			end
+			`STATE_WAIT: begin
+				state <= nstate;
+			end
+			`STATE_SETUP_R2: begin
+				instr_buf <= ram_out;
+				ram_addr <= pc;
+				pc <= pc + 1'd1;
+				state <= `STATE_WAIT;
+				nstate <= `STATE_EXECUTE;
+			end
+			`STATE_EXECUTE: begin
+				cur_instr <= instr;
+				if (!halt) begin
+					ram_en <= 0;
+					casez (instr)
+						16'h00C?: if (vsync && blit_done) begin
+							blit_op <= `BLIT_OP_SCROLL_DOWN;
+							blit_destY <= instr[3:0];
+							blit_enable <= 1'd1;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h00E0: if (vsync && blit_done) begin
+							blit_op <= `BLIT_OP_CLEAR;
+							blit_enable <= 1'd1;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h00EE: begin
+							pc <= stack[sp - 1];
+							sp <= sp - 1'd1;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h00FB: if (vsync && blit_done) begin
+							blit_op <= `BLIT_OP_SCROLL_RIGHT;
+							blit_enable <= 1'd1;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h00FC: if (vsync && blit_done) begin
+							blit_op <= `BLIT_OP_SCROLL_LEFT;
+							blit_enable <= 1'd1;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h00FD: begin
+							// exit interpreter - do nothing (wait for user reset)
+						end
+						16'h00FE: begin
+							hires <= 0;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h00FF: begin
+							hires <= 1;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h1???: begin
+							pc <= instr[11:0];
+							state <= `STATE_SETUP_R1;
+						end
+						16'h2???: begin
+							stack[sp] <= pc;
+							sp <= sp + 1'd1;
+							pc <= instr[11:0];
+							state <= `STATE_SETUP_R1;
+						end
+						16'h3???: begin
+							if (fkk == vx)
+								pc <= pc + 2'd2;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h4???: begin
+							if (fkk != vx)
+								pc <= pc + 2'd2;
+							state <= `STATE_SETUP_R1;
+						end
+						16'h5??0: begin
+							if (vx == vy)
+								pc <= pc + 2'd2;
+							state <= `STATE_SETUP_R1;
+						end					
+						16'h6???: begin
+							store_vx(fkk);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h7???: begin
+							store_vx(vx + fkk);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??0: begin
+							store_vx(vy);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??1: begin
+							store_vx(vx | vy);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??2: begin
+							store_vx(vx & vy);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??3: begin
+							store_vx(vx ^ vy);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??4: begin
+							store_vfvx(vx + vy + 0);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??5: begin
+							store_vfvx({1'b1,vx} - vy);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??6: begin
+							store_vfvx({vx[0], 1'd0, vx[7:1]});
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??7: begin
+							store_vfvx({1'b1,vy} - vx);
+							state <= `STATE_SETUP_R1;
+						end
+						16'h8??E: begin
+							store_vfvx({vx, 1'd0});
+							state <= `STATE_SETUP_R1;
+						end
+						16'h9??0: begin
+							if (vx != vy)
+								pc <= pc + 2'd2;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hA???: begin
+							i <= instr[11:0];
+							state <= `STATE_SETUP_R1;
+						end
+						16'hB???: begin
+							pc <= instr[11:0] + vx;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hC???: begin
+							store_vx(randomNumber & fkk);
+							state <= `STATE_SETUP_R1;
+						end
+						16'hD???: begin
+							if (/*vsync &&*/ blit_done) begin
+								if (instr[3:0] == 0) begin
+									blit_op <= `BLIT_OP_SPRITE_16;
+								end else begin
+									blit_op <= `BLIT_OP_SPRITE;
+									blit_srcHeight <= instr[3:0];
+								end;
+								blit_src <= i;
+								blit_destX <= vx[6:0];
+								blit_destY <= vy[5:0];
+								blit_enable <= 1'd1;
+								state <= `STATE_BLIT_RESULT;
+							end;
+						end
+						16'hE?9E: begin
+							if (keyMatrix[vx])
+								pc <= pc + 2'd2;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hE?A1: begin
+							if (!keyMatrix[vx])
+								pc <= pc + 2'd2;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?07: begin
+							store_vx(delay_timer);
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?15: begin
+							delay_timer <= vx;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?18: begin
+							sound_timer <= vx;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?1E: begin
+							i <= i + vx;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?29: begin
+							i <= {vx[3:0], 3'd0};
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?30: begin
+							i <= {vx[3:0], 4'd0} + 12'd128;
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?33: begin
+							bcd_in <= vx;
+							state <= `STATE_STORE_BCD_1;
+						end
+						16'hF?55: begin
+							d_reg <= 0;
+							state <= `STATE_SETUP_MEM_W;
+						end
+						16'hF?65: begin
+							bytecounter <= 0;
+							ram_en <= 1'd1;
+							ram_wr <= 1'd0;
+							ram_addr <= i;
+							state <= `STATE_WAIT;
+							nstate <= `STATE_MEM_R;
+						end
+						16'hF?75: if (fvx[3] == 0) begin
+							d_write <= 0;
+							d_reg <= 0;
+							state <= `STATE_RPL_W;
+						end
+						16'hF?85: if (fvx[3] == 0) begin
+							d_reg <= 0;
+							state <= `STATE_RPL_R;
+						end
+					endcase
+				end
+			end
+			`STATE_RPL_W: begin
+				rpl[d_reg] <= vd;
+				
+				if (fvx[2:0] == d_reg)
+					state <= `STATE_SETUP_R1;
+				else begin
+					d_reg <= d_reg + 1;
+				end
+			end
+			`STATE_RPL_R: begin
+				d_new <= rpl[d_reg];
+				d_write <= 1;
+				
+				if (fvx[2:0] == d_reg)
+					state <= `STATE_SETUP_R1;
+				else
+					d_reg <= d_reg + 1;
+			end
+			`STATE_STORE_BCD_1: begin
+				ram_en <= 1'd1;
+				ram_wr <= 1'd1;
+				ram_in <= bcd_out1;
+				ram_addr <= i;
+				state <= `STATE_STORE_BCD_2;
+			end
+			`STATE_STORE_BCD_2: begin
+				ram_in <= bcd_out2;
+				ram_addr <= ram_addr + 1'd1;
+				state <= `STATE_STORE_BCD_3;
+			end
+			`STATE_STORE_BCD_3: begin
+				ram_in <= bcd_out3;
+				ram_addr <= ram_addr + 1'd1;
+				state <= `STATE_SETUP_R1;
+			end
+			`STATE_MEM_R: begin
+				d_new <= ram_out;
+				d_write <= 1;
+				d_reg <= bytecounter;
+				if (bytecounter == fvx) begin
+					ram_en <= 1'd0;
+					state <= `STATE_SETUP_R1;
+				end else begin
+					ram_addr <= ram_addr + 1'd1;
+					bytecounter <= bytecounter + 1'd1;
+					state <= `STATE_WAIT;
+					nstate <= `STATE_MEM_R;
+				end;
+			end
+			`STATE_SETUP_MEM_W: begin
+				ram_in <= vd;
+				ram_en <= 1;
+				ram_wr <= 1;
+				ram_addr <= i;
+				
+				if (fvx == 0) begin
+					state <= `STATE_SETUP_R1;
+				end else begin
+					d_reg <= d_reg + 1'd1;
+					state <= `STATE_MEM_W;
+				end;
+			end
+			`STATE_MEM_W: begin
+				ram_addr <= ram_addr + 1'd1;
+				ram_in <= vd;
+				
+				if (d_reg == fvx) begin
+					state <= `STATE_SETUP_R1;
+				end else begin
+					d_reg <= d_reg + 1'd1;
+				end;
+			end
+			`STATE_BLIT_RESULT: if (blit_done) begin
+				d_reg <= 15;
+				d_write <= 1;
+				d_new <= blit_collision;
+				state <= `STATE_SETUP_R1;
+			end
+		endcase
+	end
 end
 
 endmodule

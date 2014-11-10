@@ -17,6 +17,8 @@
 
 module display(
 	input						clk,
+	input						res,
+	
 	input						hires,
 	input						pixelEnable,
 	
@@ -50,7 +52,12 @@ wire inPlayfield = pixelY >= 48 && pixelY < 432;
 assign outsidePlayfield = !inPlayfield;
 
 always @ (posedge clk) begin : AddressGenerator
-	if (frameStart) begin
+	if (res) begin
+		fbAddr <= 0;
+		lineAddr <= 0;
+		hPixelCounter <= 0;
+		vPixelCounter <= 0;
+	end else if (frameStart) begin
 		fbAddr <= 0;
 		lineAddr <= 0;
 		vPixelCounter <= vPixelMult - 1'b1;

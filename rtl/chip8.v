@@ -16,6 +16,8 @@
 */
 
 module chip8(
+	input		res,
+	
 	input		vgaClk,	 // 25.152.000 Hz clock
 	input		cpu_clk,	 // 20.000 Hz clock
 	input		blit_clk, // 100.000.000 Hz clock, or as fast as it can get
@@ -198,6 +200,8 @@ blitter Blitter(
 // CPU
 
 cpu CPU(
+	.res(res),
+	
 	.clk(cpu_clk),
 	.clk_60hz(Vsync),
 	.vsync(vgaOutside),
