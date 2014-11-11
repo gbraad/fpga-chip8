@@ -35,6 +35,7 @@ module chip8(
 	input PS2KeyboardData,
 	input PS2KeyboardClk,
 	
+	input				uploading,
 	input				upload_en,
 	input				upload_clk,
 	input [7:0]		upload_data,
@@ -147,12 +148,12 @@ end
 // CPU memory
 
 cpu_memory CPUMemory (
-	.a_clk  (upload_en ? upload_clk : cpu_clk),
-	.a_en   (upload_en | cpu_en),
-	.a_write(upload_en ? 1'b1 : cpu_write),
+	.a_clk  (uploading ? upload_clk : cpu_clk),
+	.a_en   (uploading ? upload_en : cpu_en),
+	.a_write(uploading ? 1'b1 : cpu_write),
 	.a_out  (cpu_out),
-	.a_in   (upload_en ? upload_data : cpu_in),
-	.a_addr (upload_en ? upload_addr : cpu_addr),
+	.a_in   (uploading ? upload_data : cpu_in),
+	.a_addr (uploading ? upload_addr : cpu_addr),
 	
 	.b_out(cbuf_out),
 	.b_addr(cbuf_addr),

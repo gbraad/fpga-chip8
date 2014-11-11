@@ -35,6 +35,8 @@ reg [7:0] ram [0:4095];
 initial begin
 	$readmemh("font_small.vh", ram, 0, 128 - 1);
 	$readmemh("font_large.vh", ram, 128, 128 + 160 - 1);
+	$readmemh("../rom/reset.vh", ram, 384);
+	
 	$readmemh("../games/ant.vh", ram, 512);
 //	$readmemh("../games/alien.vh", ram, 512);
 //	$readmemh("../games/blinky.vh", ram, 512);

@@ -57,7 +57,7 @@ mist_pll	mist_pll_inst (
 );
 
 clk_divider  #(.divider(5000)) Clock_20kHz(
-	res,
+	0,
 	clk_100M,
 	cpu_clk
 );
@@ -122,23 +122,23 @@ user_io #(.STRLEN(9 + 20)) UserIO(
 // Reset circuit
 
 wire uploading_negedge;
-util_negedge UploadingNegedge(cpu_clk, 0, uploading, uploading_negedge);
+util_negedge UploadingNegedge(clk_12k, 0, uploading, uploading_negedge);
 
-wire button1_negedge;
-util_negedge ButtonNegedge(cpu_clk, 0, buttons[1], button1_negedge);
+wire button1_posedge;
+util_posedge ButtonPosedge(clk_12k, 0, buttons[1], button1_posedge);
 
+reg [4:0] res_count = 0;
 reg res = 0;
-reg [3:0] res_count = 0;
 
-always @(posedge cpu_clk) begin
+always @(posedge clk_12k) begin
 	if (res) begin
-		if (&res_count) begin
-			res <= 0;
+		if (res_count[4]) begin
+			res <= 1'b0;
 			res_count <= 0;
 		end else begin
 			res_count <= res_count + 1'b1;
 		end;
-	end else if (uploading_negedge || button1_negedge) begin
+	end else if (uploading_negedge || button1_posedge) begin
 		res <= 1'b1;
 	end;
 end
@@ -146,8 +146,9 @@ end
 
 // Show some activity while uploading
 
-//assign LED = !uploading;
-assign LED = buttons[1];
+assign LED = !uploading;
+//assign LED = buttons[1];
+//assign LED = !res;
 
 
 // OSD
@@ -192,7 +193,8 @@ chip8 chip8machine(
 	
 	ps2_data, ps2_clk,
 	
-	uploading && upload_en,
+	uploading,
+	upload_en,
 	upload_clk,
 	upload_a,
 	upload_d

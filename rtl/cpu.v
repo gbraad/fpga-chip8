@@ -106,7 +106,7 @@ bcd BcdDecoder(
 	.out3(bcd_out3)
 );
 
-reg [11:0]	pc = 12'h200;
+reg [11:0]	pc = 12'h180;
 reg [11:0]	i = 0;
 reg [11:0]	stack[0:15];
 reg [3:0]	sp = 0;
@@ -200,7 +200,7 @@ always @ (posedge clk) begin
 		d_write <= 0;
 		sp <= 0;
 		i <= 0;
-		pc <= 12'h200;
+		pc <= 12'h180;
 		bytecounter <= 0;
 	end else begin
 		if (clk_60hz_edge) begin
