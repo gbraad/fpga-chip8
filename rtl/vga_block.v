@@ -22,6 +22,7 @@ module vga_block(
 	
 	// Hires or lores mode
 	input					hires,
+	input					wide,
 
 	// Output
 	output				hSync,
@@ -77,6 +78,7 @@ display Display(
 	res,
 	
 	hires,
+	wide,
 	dispEnable,
 	pixelX, pixelY,
 	r, g, b,

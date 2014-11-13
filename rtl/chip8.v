@@ -24,6 +24,8 @@ module chip8(
 	
 	input		cpu_halt,
 	
+	input		wide,
+	
 	output			Hsync,
 	output			Vsync,
 	output [2:0]	vgaRed,
@@ -163,6 +165,7 @@ cpu_memory CPUMemory (
 vga_block VGA(
 	.clk(vgaClk),
 	.hires(vgaHires),
+	.wide(wide),
 	
 	.hSync(Hsync),
 	.vSync(Vsync),
@@ -200,13 +203,16 @@ blitter Blitter(
 
 // CPU
 
+wire cpu_blit_ready;
+util_sync_domain sync_blit_ready(cpu_clk, res, blit_ready, cpu_blit_ready);
+
 cpu CPU(
 	.res(res),
 	
 	.clk(cpu_clk),
 	.clk_60hz(Vsync),
 	.vsync(vgaOutside),
-	.halt(cpu_halt || !blit_ready || upload_en),
+	.halt(cpu_halt || upload_en),
 	
 	.keyMatrix(keyboardMatrix),
 	
@@ -224,7 +230,7 @@ cpu CPU(
 	.blit_destX(blit_destX),
 	.blit_destY(blit_destY),
 	.blit_enable(blit_enable),
-	.blit_done(blit_ready),
+	.blit_done(cpu_blit_ready),
 	.blit_collision(blit_collision),
 	
 	.cur_instr(currentOpcode)

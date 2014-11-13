@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sï¿½rensen
+	Copyright (C) 2013  Carsten Elton SÃ¯Â¿Â½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -60,7 +60,6 @@ mist_pll	mist_pll_inst (
 	.c0 ( clk_50M ),
 	.c1 ( clk_25M ),
 	.c2 ( clk_12k )
-//	.locked ( locked_sig )
 );
 
 clk_divider  #(.divider(4000)) ClockDividerFast(
@@ -195,10 +194,11 @@ chip8 chip8machine(
 	res,
 	
 	clk_25M,
-	clk_12k, //cpu_clk,
+	cpu_clk,
 	clk_50M,
 	
 	uploading,
+	status_monitor_wide,
 	
 	chip8_hs, chip8_vs,
 	chip8_R[5:3], chip8_G[5:3], chip8_B[5:4],

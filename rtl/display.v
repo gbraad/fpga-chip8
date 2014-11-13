@@ -20,6 +20,7 @@ module display(
 	input						res,
 	
 	input						hires,
+	input						wide,
 	input						pixelEnable,
 	
 	input		[10:0]		pixelX, pixelY,
@@ -36,7 +37,6 @@ module display(
 	output					outsidePlayfield
 );
 
-wire wide = 1'b0;
 wire pixel;
 
 wire[7:0] fieldPixelWidth = hires ? 8'd128 : 8'd64;
