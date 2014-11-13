@@ -34,6 +34,8 @@ module chip8(
 	
 	output [15:0]	currentOpcode,
 	
+	output			audio_enable,
+	
 	input PS2KeyboardData,
 	input PS2KeyboardClk,
 	
@@ -223,6 +225,8 @@ cpu CPU(
 	.ram_addr(cpu_addr),
 
 	.hires(vgaHires),
+	
+	.audio_enable(audio_enable),
 
 	.blit_op(blit_op),
 	.blit_src(blit_src),

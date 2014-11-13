@@ -38,7 +38,11 @@ module mist_top(
   input          SPI_SS2,		// data_io
   input          SPI_SS3,		// OSD
   input          SPI_SS4,		// unused in this core
-  input          CONF_DATA0	// SPI_SS for user_io
+  input          CONF_DATA0,	// SPI_SS for user_io
+
+	// AUDIO
+	output			AUDIO_L,
+	output			AUDIO_R
   
 );
 
@@ -61,6 +65,15 @@ mist_pll	mist_pll_inst (
 	.c1 ( clk_25M ),
 	.c2 ( clk_12k )
 );
+
+reg [4:0] audio_pwm;
+always @(posedge clk_12k)
+	audio_pwm <= audio_pwm + 1'b1;
+
+wire audio_enable;
+wire audio = audio_enable && &audio_pwm[4:3];
+assign AUDIO_R = audio;
+assign AUDIO_L = audio;
 
 clk_divider  #(.divider(4000)) ClockDividerFast(
 	0,
@@ -204,6 +217,8 @@ chip8 chip8machine(
 	chip8_R[5:3], chip8_G[5:3], chip8_B[5:4],
 	
 	current_opcode,
+
+	audio_enable,
 	
 	ps2_data, ps2_clk,
 	

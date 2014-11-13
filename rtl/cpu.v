@@ -72,6 +72,8 @@ module cpu(
 	
 	output reg				hires = 0,
 	
+	output					audio_enable,
+	
 	output reg	[2:0]		blit_op = 0,
 	output reg	[11:0]	blit_src = 0,
 	output reg	[3:0]		blit_srcHeight = 0,
@@ -112,6 +114,8 @@ reg [11:0]	stack[0:15];
 reg [3:0]	sp = 0;
 reg [7:0]	delay_timer = 0;
 reg [7:0]	sound_timer = 0;
+
+assign audio_enable = sound_timer != 0;
 
 reg [7:0] instr_buf;
 
