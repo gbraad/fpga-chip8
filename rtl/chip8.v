@@ -20,7 +20,7 @@ module chip8(
 	
 	input		vgaClk,	 // 25.152.000 Hz clock
 	input		cpu_clk,	 // 20.000 Hz clock
-	input		blit_clk, // 100.000.000 Hz clock, or as fast as it can get
+	input		blit_clk, // 100.000.000 Hz clock, or as fast as it can get. cpu_clk must be derived from this
 	
 	input		cpu_halt,
 	
@@ -38,8 +38,8 @@ module chip8(
 	input				uploading,
 	input				upload_en,
 	input				upload_clk,
-	input [7:0]		upload_data,
-	input [11:0]	upload_addr
+	input [11:0]	upload_addr,
+	input [7:0]		upload_data
 );
 
 wire			vgaHires;
@@ -150,7 +150,7 @@ end
 cpu_memory CPUMemory (
 	.a_clk  (uploading ? upload_clk : cpu_clk),
 	.a_en   (uploading ? upload_en : cpu_en),
-	.a_write(uploading ? 1'b1 : cpu_write),
+	.a_write(uploading ? 1'b1 : cpu_wr),
 	.a_out  (cpu_out),
 	.a_in   (uploading ? upload_data : cpu_in),
 	.a_addr (uploading ? upload_addr : cpu_addr),
@@ -211,7 +211,7 @@ cpu CPU(
 	.keyMatrix(keyboardMatrix),
 	
 	.ram_en(cpu_en),
-	.ram_wr(cpu_write),
+	.ram_wr(cpu_wr),
 	.ram_out(cpu_out),
 	.ram_in(cpu_in),
 	.ram_addr(cpu_addr),

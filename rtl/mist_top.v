@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton S�rensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -39,27 +39,40 @@ module mist_top(
   input          SPI_SS3,		// OSD
   input          SPI_SS4,		// unused in this core
   input          CONF_DATA0	// SPI_SS for user_io
-	
+  
 );
 
-wire clk_100M;
+wire clk_50M;
 wire clk_25M;
 wire clk_12k;
-wire cpu_clk;
+
+wire [7:0] status;
+wire status_monitor_wide = status[1];
+wire status_cpu_slow = status[2];
+
+wire cpu_clk_fast;
+wire cpu_clk_slow;
+wire cpu_clk = status_cpu_slow ? cpu_clk_slow : cpu_clk_fast;
 
 mist_pll	mist_pll_inst (
 //	.areset ( areset_sig ),
 	.inclk0 ( CLOCK_27[0] ),
-	.c0 ( clk_100M ),
+	.c0 ( clk_50M ),
 	.c1 ( clk_25M ),
 	.c2 ( clk_12k )
 //	.locked ( locked_sig )
 );
 
-clk_divider  #(.divider(5000)) Clock_20kHz(
+clk_divider  #(.divider(4000)) ClockDividerFast(
 	0,
-	clk_100M,
-	cpu_clk
+	clk_50M,
+	cpu_clk_fast
+);
+
+clk_divider  #(.divider(10000)) ClockDividerSlow(
+	0,
+	clk_50M,
+	cpu_clk_slow
 );
 
 // Program uploader
@@ -90,12 +103,13 @@ wire ps2_clk;
 
 localparam CONF_STR = {
 	"Chip;CH8;",
-	"O1,Monitor,4:3,16:9;"
+	"O1,Monitor,4:3,16:9;",
+	"O2,Speed,Fast,Slow;"
 };
 
 wire [1:0] buttons;
 
-user_io #(.STRLEN(9 + 20)) UserIO(
+user_io #(.STRLEN(9 + 20 + 19)) UserIO(
 	.conf_str		(CONF_STR			),
 
 	.SPI_CLK     	(SPI_SCK          ),
@@ -111,7 +125,7 @@ user_io #(.STRLEN(9 + 20)) UserIO(
 //   .JOY0          (joyA             ),
 //   .JOY1          (joyB             ),
 
-//   .status        (status           ),
+   .status        (status           ),
 
    .clk           (clk_12k          ),   // should be 10-16kHz for ps2 clock
    .ps2_data      (ps2_data         ),
@@ -181,8 +195,8 @@ chip8 chip8machine(
 	res,
 	
 	clk_25M,
-	cpu_clk,
-	clk_100M,
+	clk_12k, //cpu_clk,
+	clk_50M,
 	
 	uploading,
 	

@@ -81,15 +81,15 @@ endtask
 
 reg	[3:0]	scrollCarry;
 
-assign hiresLineStart = buf_addr[2:0] == 3'b000;
-assign loresLineStart = buf_addr[1:0] == 2'b00;
-assign lineStart = hires ? hiresLineStart : loresLineStart;
+wire hiresLineStart = buf_addr[2:0] == 3'b000;
+wire loresLineStart = buf_addr[1:0] == 2'b00;
+wire lineStart = hires ? hiresLineStart : loresLineStart;
 
-assign hiresLineEnd = (hires) && (buf_addr[2:0] == 3'b111);
-assign loresLineEnd = (!hires) && (buf_addr[1:0] == 2'b11);
-assign lineEnd = hires ? hiresLineEnd : loresLineEnd;
+wire hiresLineEnd = (hires) && (buf_addr[2:0] == 3'b111);
+wire loresLineEnd = (!hires) && (buf_addr[1:0] == 2'b11);
+wire lineEnd = hires ? hiresLineEnd : loresLineEnd;
 
-assign scrollLeft = operation == `BLIT_OP_SCROLL_LEFT;
+wire scrollLeft = operation == `BLIT_OP_SCROLL_LEFT;
 
 `define SCROLL_STATE_WAIT_READ	2'd0
 `define SCROLL_STATE_READ_WRITE	2'd1

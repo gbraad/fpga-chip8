@@ -180,9 +180,10 @@ endtask
 `define STATE_MEM_R				4'd7
 `define STATE_SETUP_MEM_W		4'd8
 `define STATE_MEM_W				4'd9
-`define STATE_BLIT_RESULT		4'd10
-`define STATE_RPL_R				4'd11
-`define STATE_RPL_W				4'd12
+`define STATE_BLIT_START		4'd10
+`define STATE_BLIT_RESULT		4'd11
+`define STATE_RPL_R				4'd12
+`define STATE_RPL_W				4'd13
 
 reg [3:0] state = `STATE_SETUP_R1;
 reg [3:0] nstate;
@@ -244,25 +245,22 @@ always @ (posedge clk) begin
 							blit_enable <= 1'd1;
 							state <= `STATE_SETUP_R1;
 						end
-						16'h00E0: if (vsync && blit_done) begin
+						16'h00E0: if (vsync) begin
 							blit_op <= `BLIT_OP_CLEAR;
-							blit_enable <= 1'd1;
-							state <= `STATE_SETUP_R1;
+							state <= `STATE_BLIT_START;
 						end
 						16'h00EE: begin
 							pc <= stack[sp - 1];
 							sp <= sp - 1'd1;
 							state <= `STATE_SETUP_R1;
 						end
-						16'h00FB: if (vsync && blit_done) begin
+						16'h00FB: if (vsync) begin
 							blit_op <= `BLIT_OP_SCROLL_RIGHT;
-							blit_enable <= 1'd1;
-							state <= `STATE_SETUP_R1;
+							state <= `STATE_BLIT_START;
 						end
-						16'h00FC: if (vsync && blit_done) begin
+						16'h00FC: if (blit_done) begin
 							blit_op <= `BLIT_OP_SCROLL_LEFT;
-							blit_enable <= 1'd1;
-							state <= `STATE_SETUP_R1;
+							state <= `STATE_BLIT_START;
 						end
 						16'h00FD: begin
 							// exit interpreter - do nothing (wait for user reset)
@@ -362,19 +360,16 @@ always @ (posedge clk) begin
 							state <= `STATE_SETUP_R1;
 						end
 						16'hD???: begin
-							if (/*vsync &&*/ blit_done) begin
-								if (instr[3:0] == 0) begin
-									blit_op <= `BLIT_OP_SPRITE_16;
-								end else begin
-									blit_op <= `BLIT_OP_SPRITE;
-									blit_srcHeight <= instr[3:0];
-								end;
-								blit_src <= i;
-								blit_destX <= vx[6:0];
-								blit_destY <= vy[5:0];
-								blit_enable <= 1'd1;
-								state <= `STATE_BLIT_RESULT;
+							if (instr[3:0] == 0) begin
+								blit_op <= `BLIT_OP_SPRITE_16;
+							end else begin
+								blit_op <= `BLIT_OP_SPRITE;
+								blit_srcHeight <= instr[3:0];
 							end;
+							blit_src <= i;
+							blit_destX <= vx[6:0];
+							blit_destY <= vy[5:0];
+							state <= `STATE_BLIT_START;
 						end
 						16'hE?9E: begin
 							if (keyMatrix[vx])
@@ -509,6 +504,10 @@ always @ (posedge clk) begin
 				end else begin
 					d_reg <= d_reg + 1'd1;
 				end;
+			end
+			`STATE_BLIT_START: if (blit_done) begin
+				blit_enable <= 1'd1;
+				state <= `STATE_BLIT_RESULT;
 			end
 			`STATE_BLIT_RESULT: if (blit_done) begin
 				d_reg <= 15;
