@@ -37,10 +37,10 @@ initial begin
 	$readmemh("font_large.vh", ram, 128, 128 + 160 - 1);
 	$readmemh("../rom/reset.vh", ram, 384, 511);
 	
-//	$readmemh("../games/addition.vh", ram, 512);
+	$readmemh("../games/addition.vh", ram, 512);
 //	$readmemh("../games/alien.vh", ram, 512);
 //	$readmemh("../games/ant.vh", ram, 512);
-	$readmemh("../games/blinky.vh", ram, 512);
+//	$readmemh("../games/blinky.vh", ram, 512);
 //	$readmemh("../games/car.vh", ram, 512);
 //	$readmemh("../games/field.vh", ram, 512);
 //	$readmemh("../games/hpiper.vh", ram, 512);

@@ -87,6 +87,34 @@ module cpu(
 	
 );
 
+wire keyMatrix_signal = |keyMatrix;
+wire keyMatrix_signal_synchronized;
+
+util_sync_domain KeyMatrixSynchronized(clk, res, keyMatrix_signal, keyMatrix_signal_synchronized);
+
+wire keyMatrix_posedge;
+
+util_posedge KeyMatrixPosEdge(clk, res, keyMatrix_signal_synchronized, keyMatrix_posedge);
+
+wire [3:0] keyMatrix_selected =
+	keyMatrix[0] ? 4'd0 :
+	keyMatrix[1] ? 4'd1 :
+	keyMatrix[2] ? 4'd2 :
+	keyMatrix[3] ? 4'd3 :
+	keyMatrix[4] ? 4'd4 :
+	keyMatrix[5] ? 4'd5 :
+	keyMatrix[6] ? 4'd6 :
+	keyMatrix[7] ? 4'd7 :
+	keyMatrix[8] ? 4'd8 :
+	keyMatrix[9] ? 4'd9 :
+	keyMatrix[10] ? 4'd10 :
+	keyMatrix[11] ? 4'd11 :
+	keyMatrix[12] ? 4'd12 :
+	keyMatrix[13] ? 4'd13 :
+	keyMatrix[14] ? 4'd14 :
+	keyMatrix[15] ? 4'd15 :
+	4'bX;
+
 reg [7:0]	rpl[0:7];
 
 wire [7:0] randomNumber;
@@ -387,6 +415,10 @@ always @ (posedge clk) begin
 						end
 						16'hF?07: begin
 							store_vx(delay_timer);
+							state <= `STATE_SETUP_R1;
+						end
+						16'hF?0A: if (keyMatrix_posedge) begin
+							store_vx(keyMatrix_selected);
 							state <= `STATE_SETUP_R1;
 						end
 						16'hF?15: begin
