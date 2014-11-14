@@ -37,7 +37,10 @@ module nexys3_top(
 assign PS2KeyboardData = 1'bZ;
 assign PS2KeyboardClk = 1'bZ;
 
-wire 			vgaClk;
+wire	vgaClk;
+
+wire	audio_enable;
+
 
 // VGA clock
 
@@ -111,18 +114,29 @@ always @ (posedge clk_1khz) begin
 end
 
 chip8 chip8machine(
+	1'b0,	//res
+
 	vgaClk,
 	cpu_clk,
 	clk,
 	
 	halt && sw[7],
 	
+	1'b0, //wide
+	
 	Hsync, Vsync,
 	vgaRed, vgaGreen, vgaBlue,
 	
 	hexdigits,
+
+	audio_enable,
 	
-	PS2KeyboardData, PS2KeyboardClk
+	PS2KeyboardData, PS2KeyboardClk,
+	
+	1'b0,
+	1'b0,
+	1'b0,
+	12'b0, 8'b0
 );
 
 endmodule
