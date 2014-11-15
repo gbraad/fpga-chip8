@@ -214,7 +214,7 @@ cpu CPU(
 	.clk(cpu_clk),
 	.clk_60hz(Vsync),
 	.vsync(vgaOutside),
-	.halt(cpu_halt || upload_en),
+	.halt(cpu_halt || uploading || !cpu_blit_ready),
 	
 	.keyMatrix(keyboardMatrix),
 	

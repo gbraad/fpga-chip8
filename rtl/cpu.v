@@ -87,32 +87,27 @@ module cpu(
 	
 );
 
-wire keyMatrix_signal = |keyMatrix;
-wire keyMatrix_signal_synchronized;
-
-util_sync_domain KeyMatrixSynchronized(clk, res, keyMatrix_signal, keyMatrix_signal_synchronized);
-
-wire keyMatrix_posedge;
-
-util_posedge KeyMatrixPosEdge(clk, res, keyMatrix_signal_synchronized, keyMatrix_posedge);
+wire [15:0] keyMatrix_edge;
+edge_detect #(.width(16)) KeyMatrixEdgeDetect(clk, keyMatrix, keyMatrix_edge);
+wire keyMatrix_signal = |keyMatrix_edge;
 
 wire [3:0] keyMatrix_selected =
-	keyMatrix[0] ? 4'd0 :
-	keyMatrix[1] ? 4'd1 :
-	keyMatrix[2] ? 4'd2 :
-	keyMatrix[3] ? 4'd3 :
-	keyMatrix[4] ? 4'd4 :
-	keyMatrix[5] ? 4'd5 :
-	keyMatrix[6] ? 4'd6 :
-	keyMatrix[7] ? 4'd7 :
-	keyMatrix[8] ? 4'd8 :
-	keyMatrix[9] ? 4'd9 :
-	keyMatrix[10] ? 4'd10 :
-	keyMatrix[11] ? 4'd11 :
-	keyMatrix[12] ? 4'd12 :
-	keyMatrix[13] ? 4'd13 :
-	keyMatrix[14] ? 4'd14 :
-	keyMatrix[15] ? 4'd15 :
+	keyMatrix_edge[0] ? 4'd0 :
+	keyMatrix_edge[1] ? 4'd1 :
+	keyMatrix_edge[2] ? 4'd2 :
+	keyMatrix_edge[3] ? 4'd3 :
+	keyMatrix_edge[4] ? 4'd4 :
+	keyMatrix_edge[5] ? 4'd5 :
+	keyMatrix_edge[6] ? 4'd6 :
+	keyMatrix_edge[7] ? 4'd7 :
+	keyMatrix_edge[8] ? 4'd8 :
+	keyMatrix_edge[9] ? 4'd9 :
+	keyMatrix_edge[10] ? 4'd10 :
+	keyMatrix_edge[11] ? 4'd11 :
+	keyMatrix_edge[12] ? 4'd12 :
+	keyMatrix_edge[13] ? 4'd13 :
+	keyMatrix_edge[14] ? 4'd14 :
+	keyMatrix_edge[15] ? 4'd15 :
 	4'bX;
 
 reg [7:0]	rpl[0:7];
@@ -235,6 +230,7 @@ always @ (posedge clk) begin
 		i <= 0;
 		pc <= 12'h180;
 		bytecounter <= 0;
+		blit_enable <= 0;
 	end else begin
 		if (clk_60hz_edge) begin
 			if (delay_timer != 0)
@@ -252,7 +248,6 @@ always @ (posedge clk) begin
 				pc <= pc + 1'd1;
 				state <= `STATE_WAIT;
 				nstate <= `STATE_SETUP_R2;
-				blit_enable <= 1'd0;
 				x_write <= 0;
 				d_write <= 0;
 			end
@@ -274,10 +269,9 @@ always @ (posedge clk) begin
 						16'h00C?: if (vsync && blit_done) begin
 							blit_op <= `BLIT_OP_SCROLL_DOWN;
 							blit_destY <= instr[3:0];
-							blit_enable <= 1'd1;
-							state <= `STATE_SETUP_R1;
+							state <= `STATE_BLIT_START;
 						end
-						16'h00E0: if (vsync) begin
+						16'h00E0: if (vsync && blit_done) begin
 							blit_op <= `BLIT_OP_CLEAR;
 							state <= `STATE_BLIT_START;
 						end
@@ -286,11 +280,11 @@ always @ (posedge clk) begin
 							sp <= sp - 1'd1;
 							state <= `STATE_SETUP_R1;
 						end
-						16'h00FB: if (vsync) begin
+						16'h00FB: if (vsync && blit_done) begin
 							blit_op <= `BLIT_OP_SCROLL_RIGHT;
 							state <= `STATE_BLIT_START;
 						end
-						16'h00FC: if (blit_done) begin
+						16'h00FC: if (vsync && blit_done) begin
 							blit_op <= `BLIT_OP_SCROLL_LEFT;
 							state <= `STATE_BLIT_START;
 						end
@@ -391,7 +385,7 @@ always @ (posedge clk) begin
 							store_vx(randomNumber & fkk);
 							state <= `STATE_SETUP_R1;
 						end
-						16'hD???: begin
+						16'hD???: if(blit_done) begin
 							if (instr[3:0] == 0) begin
 								blit_op <= `BLIT_OP_SPRITE_16;
 							end else begin
@@ -417,7 +411,7 @@ always @ (posedge clk) begin
 							store_vx(delay_timer);
 							state <= `STATE_SETUP_R1;
 						end
-						16'hF?0A: if (keyMatrix_posedge) begin
+						16'hF?0A: if (keyMatrix_signal) begin
 							store_vx(keyMatrix_selected);
 							state <= `STATE_SETUP_R1;
 						end
@@ -541,11 +535,12 @@ always @ (posedge clk) begin
 					d_reg <= d_reg + 1'd1;
 				end;
 			end
-			`STATE_BLIT_START: if (blit_done) begin
+			`STATE_BLIT_START: begin
 				blit_enable <= 1'd1;
 				state <= `STATE_BLIT_RESULT;
 			end
 			`STATE_BLIT_RESULT: if (blit_done) begin
+				blit_enable <= 1'd0;
 				d_reg <= 15;
 				d_write <= 1;
 				d_new <= blit_collision;
