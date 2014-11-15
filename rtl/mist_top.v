@@ -147,6 +147,10 @@ user_io #(.STRLEN(9 + 20 + 19)) UserIO(
 
 // Reset circuit
 
+wire error;
+wire error_posedge;
+util_posedge ErrorPosedge(clk_12k, 0, error, error_posedge);
+
 wire uploading_negedge;
 util_negedge UploadingNegedge(clk_12k, 0, uploading, uploading_negedge);
 
@@ -164,7 +168,7 @@ always @(posedge clk_12k) begin
 		end else begin
 			res_count <= res_count + 1'b1;
 		end;
-	end else if (uploading_negedge || button1_posedge) begin
+	end else if (uploading_negedge || button1_posedge || error_posedge) begin
 		res <= 1'b1;
 	end;
 end
@@ -226,7 +230,9 @@ chip8 chip8machine(
 	upload_en,
 	upload_clk,
 	upload_a,
-	upload_d
+	upload_d,
+	
+	error
 );
 
 
