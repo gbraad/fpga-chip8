@@ -15,7 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-`include "blitter.vh"
+`include "../blitter.vh"
 
 module mist_top(
 	// 27 MHz clocks
