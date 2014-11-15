@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton SÃ¯Â¿Â½rensen
+	Copyright (C) 2013  Carsten Elton SÃƒÂ¯Ã‚Â¿Ã‚Â½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
