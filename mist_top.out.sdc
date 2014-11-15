@@ -39,19 +39,13 @@ set_time_format -unit ns -decimal_places 3
 #**************************************************************
 
 create_clock -name {CLOCK_27[0]} -period 37.037 -waveform { 0.000 18.518 } [get_ports {CLOCK_27[0]}]
-create_clock -name {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync} -period 32000.000 -waveform { 0.000 3840.000 } [get_registers { chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync }]
-create_clock -name {SPI_SCK} -period 40.000 -waveform { 0.000 20.000 } [get_ports { SPI_SCK }]
-create_clock -name {clk_divider:ClockDividerFast|clk_out} -period 200000.000 -waveform { 0.000 100000.000 } [get_registers { clk_divider:ClockDividerFast|clk_out }]
-create_clock -name {chip8:chip8machine|ps2in:Keyboard|ready} -period 333000.000 -waveform { 0.000 33000.000 } [get_registers { chip8:chip8machine|ps2in:Keyboard|ready }]
 
 
 #**************************************************************
 # Create Generated Clock
 #**************************************************************
 
-create_generated_clock -name {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]} -source [get_pins {mist_pll_inst|altpll_component|auto_generated|pll1|inclk[0]}] -duty_cycle 50.000 -multiply_by 50 -divide_by 27 -master_clock {CLOCK_27[0]} [get_pins {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] 
-create_generated_clock -name {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]} -source [get_pins {mist_pll_inst|altpll_component|auto_generated|pll1|inclk[0]}] -duty_cycle 50.000 -multiply_by 25 -divide_by 27 -master_clock {CLOCK_27[0]} [get_pins {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] 
-create_generated_clock -name {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]} -source [get_pins {mist_pll_inst|altpll_component|auto_generated|pll1|inclk[0]}] -duty_cycle 50.000 -multiply_by 1 -divide_by 2250 -master_clock {CLOCK_27[0]} [get_pins {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] 
+derive_pll_clocks
 
 
 #**************************************************************
@@ -64,134 +58,7 @@ create_generated_clock -name {mist_pll_inst|altpll_component|auto_generated|pll1
 # Set Clock Uncertainty
 #**************************************************************
 
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}]  0.030  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}]  0.030  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}]  0.030  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}]  0.030  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -rise_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -fall_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -rise_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -setup 0.100  
-set_clock_uncertainty -fall_from [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}] -hold 0.080  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|ps2in:Keyboard|ready}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.090  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.110  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.090  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.110  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.090  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.110  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.090  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.110  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {SPI_SCK}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {SPI_SCK}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.030  
-set_clock_uncertainty -rise_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.030  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.090  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.110  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -setup 0.090  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}] -hold 0.110  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.090  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.110  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.090  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.110  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {SPI_SCK}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {SPI_SCK}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.030  
-set_clock_uncertainty -fall_from [get_clocks {SPI_SCK}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.030  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -rise_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {clk_divider:ClockDividerFast|clk_out}] -fall_to [get_clocks {clk_divider:ClockDividerFast|clk_out}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -rise_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}]  0.020  
-set_clock_uncertainty -rise_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -fall_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -rise_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup 0.080  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -fall_to [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold 0.100  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -rise_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}]  0.020  
-set_clock_uncertainty -fall_from [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}] -fall_to [get_clocks {chip8:chip8machine|vga_block:VGA|vga_sync:VGASync|hSync}]  0.020  
+derive_clock_uncertainty
 
 
 #**************************************************************

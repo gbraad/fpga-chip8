@@ -52,10 +52,12 @@ end
 always @(posedge a_clk) begin
 	if (a_en) begin
 		// Write protect the lower 512 bytes (charset)
-		if (a_write && |a_addr[11:9]) begin
-			ram[a_addr] <= a_in;
+		if (a_write) begin
+			if (|a_addr[11:9])
+				ram[a_addr] <= a_in;
+		end else begin
+			a_out <= ram[a_addr];
 		end
-		a_out <= ram[a_addr];
 	end
 end
 
