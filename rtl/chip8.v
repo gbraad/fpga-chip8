@@ -43,7 +43,9 @@ module chip8(
 	input				upload_en,
 	input				upload_clk,
 	input [11:0]	upload_addr,
-	input [7:0]		upload_data
+	input [7:0]		upload_data,
+	
+	output	error
 );
 
 wire			vgaHires;
@@ -237,7 +239,9 @@ cpu CPU(
 	.blit_done(cpu_blit_ready),
 	.blit_collision(blit_collision),
 	
-	.cur_instr(currentOpcode)
+	.cur_instr(currentOpcode),
+
+	.error(error)
 );
 	
 

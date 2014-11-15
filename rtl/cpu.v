@@ -83,8 +83,10 @@ module cpu(
 	input						blit_done,
 	input						blit_collision,
 	
-	output reg	[15:0]	cur_instr = 16'h1337
+	output reg	[15:0]	cur_instr = 16'h1337,
 	
+	output reg 				error = 0
+
 );
 
 wire [15:0] keyMatrix_edge;
@@ -231,6 +233,7 @@ always @ (posedge clk) begin
 		pc <= 12'h180;
 		bytecounter <= 0;
 		blit_enable <= 0;
+		error <= 0;
 	end else begin
 		if (clk_60hz_edge) begin
 			if (delay_timer != 0)
@@ -290,6 +293,7 @@ always @ (posedge clk) begin
 						end
 						16'h00FD: begin
 							// exit interpreter - do nothing (wait for user reset)
+							error <= 1;
 						end
 						16'h00FE: begin
 							hires <= 0;

@@ -248,6 +248,15 @@ reg [7:0] spriteHighByte;
 
 wire [31:0] spriteScrolledBitmap16 = {spriteHighByte, cpu_out, 16'd0} >> spriteScroll;
 
+wire [3:0] spriteHeightLessOne = operation == `BLIT_OP_SPRITE_16 ? 4'd15 : (srcHeight - 1'd1);
+
+wire [6:0] spriteLastLine = (hires ? destY[5:0] : destY[4:0]) + spriteHeightLessOne;
+
+wire [5:0] playfieldLastLine = hires ? 6'd63 : 6'd31;
+
+wire [3:0] excessLines = spriteLastLine > playfieldLastLine ? spriteLastLine - playfieldLastLine : 0;
+
+
 //
 // Sprite
 //
@@ -270,7 +279,7 @@ task init_sprite;
 		
 		collision <= 0;
 		
-		spriteLineCount <= operation == `BLIT_OP_SPRITE_16 ? 4'd15 : (srcHeight - 1'd1);
+		spriteLineCount <= spriteHeightLessOne - excessLines;
 	end;
 endtask
 

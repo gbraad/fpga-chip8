@@ -41,6 +41,7 @@ wire	vgaClk;
 
 wire	audio_enable;
 
+wire	error;
 
 // VGA clock
 
@@ -136,7 +137,9 @@ chip8 chip8machine(
 	1'b0,
 	1'b0,
 	1'b0,
-	12'b0, 8'b0
+	12'b0, 8'b0,
+	
+	error
 );
 
 endmodule
