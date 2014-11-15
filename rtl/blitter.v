@@ -228,7 +228,9 @@ wire	[8:0] loresSpriteLine;
 assign loresSpriteLine = {destY, 2'b00};
 
 wire	[8:0]	spriteOffset;
-assign spriteOffset = destX[6:4];
+assign spriteOffset = hires ? destX[6:4] : destX[5:4];
+
+wire at_right_border = hires ? &spriteOffset[2:0] : &spriteOffset[1:0];
 
 wire	[8:0] spriteDestBegin;
 assign spriteDestBegin = (hires ? hiresSpriteLine : loresSpriteLine) + spriteOffset;
@@ -295,7 +297,7 @@ task run_sprite;
 			`SPRITE_STATE_SETUP2: begin
 				buf_addr <= buf_addr + 1'd1;
 				buf_write <= 0;
-				subState <= `SPRITE_STATE_WAIT2;
+				subState <= at_right_border ? `SPRITE_STATE_SETUP1 : `SPRITE_STATE_WAIT2;
 			end
 			`SPRITE_STATE_WAIT2: begin
 				subState <= `SPRITE_STATE_RW2;
