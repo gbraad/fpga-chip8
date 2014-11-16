@@ -437,11 +437,11 @@ always @ (posedge clk) begin
 							state <= `STATE_SETUP_R1;
 						end
 						16'hF?29: begin
-							i <= {vx[3:0], 3'd0};
+							i <= {2'b10, vx[3:0], 3'b000};
 							state <= `STATE_SETUP_R1;
 						end
 						16'hF?30: begin
-							i <= {vx[3:0], 4'd0} + 12'd128;
+							i <= {vx[3:0], 4'b0000};
 							state <= `STATE_SETUP_R1;
 						end
 						16'hF?33: begin

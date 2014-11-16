@@ -33,8 +33,9 @@ module cpu_memory(
 reg [7:0] ram [0:4095];
 
 initial begin
-	$readmemh("../rom/font_small.vh", ram, 0, 128 - 1);
-	$readmemh("../rom/font_large.vh", ram, 128, 128 + 160 - 1);
+	$readmemh("../rom/font_large.vh", ram, 0, 159);
+	$readmemh("../rom/letters.vh", ram, 160, 255);
+	$readmemh("../rom/font_small.vh", ram, 256, 383);
 	$readmemh("../rom/reset.vh", ram, 384, 511);
 	
 //	$readmemh("../games/addition.vh", ram, 512);
@@ -46,8 +47,10 @@ initial begin
 //	$readmemh("../games/hpiper.vh", ram, 512);
 //	$readmemh("../games/joust.vh", ram, 512);
 //	$readmemh("../games/laser.vh", ram, 512);
-	$readmemh("../games/loopz.vh", ram, 512);
+//	$readmemh("../games/loopz.vh", ram, 512);
 //	$readmemh("../games/pong.vh", ram, 512);
+
+	$readmemh("../games/fontdump.vh", ram, 512);
 end
 
 always @(posedge a_clk) begin
