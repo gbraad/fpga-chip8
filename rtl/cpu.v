@@ -181,6 +181,8 @@ CpuRegisters Registers(
 	.d(d_reg)
 );
 
+wire[12:0] i_plus_vx = i + vx + 0;
+
 task store_vx;
 	input [7:0] v;
 	begin
@@ -428,7 +430,10 @@ always @ (posedge clk) begin
 							state <= `STATE_SETUP_R1;
 						end
 						16'hF?1E: begin
-							i <= i + vx;
+							i <= i_plus_vx[11:0];
+							d_write <= 1;
+							d_reg <= 15;
+							d_new <= i_plus_vx[12];
 							state <= `STATE_SETUP_R1;
 						end
 						16'hF?29: begin
