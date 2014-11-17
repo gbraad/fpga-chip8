@@ -50,7 +50,8 @@ initial begin
 //	$readmemh("../games/loopz.vh", ram, 512);
 //	$readmemh("../games/pong.vh", ram, 512);
 
-	$readmemh("../games/fontdump.vh", ram, 512);
+//	$readmemh("../games/fontdump.vh", ram, 512);
+	$readmemh("../games/rpltest.vh", ram, 512);
 end
 
 always @(posedge a_clk) begin

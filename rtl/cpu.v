@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton S�rensen
+	Copyright (C) 2013  Carsten Elton Sorensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -268,7 +268,7 @@ always @ (posedge clk) begin
 			end
 			`STATE_EXECUTE: begin
 				cur_instr <= instr;
-				if (!halt) begin
+				if (!halt || keyMatrix_signal) begin	// keyMatrix_signal is a hack to enable singlestepping over wait for keypress instruction
 					ram_en <= 0;
 					casez (instr)
 						16'h00C?: if (vsync && blit_done) begin
@@ -466,7 +466,7 @@ always @ (posedge clk) begin
 							state <= `STATE_RPL_W;
 						end
 						16'hF?85: if (fvx[3] == 0) begin
-							d_reg <= 0;
+							bytecounter <= 0;
 							state <= `STATE_RPL_R;
 						end
 					endcase
@@ -475,20 +475,20 @@ always @ (posedge clk) begin
 			`STATE_RPL_W: begin
 				rpl[d_reg] <= vd;
 				
-				if (fvx[2:0] == d_reg)
-					state <= `STATE_SETUP_R1;
-				else begin
-					d_reg <= d_reg + 1;
-				end
-			end
-			`STATE_RPL_R: begin
-				d_new <= rpl[d_reg];
-				d_write <= 1;
-				
-				if (fvx[2:0] == d_reg)
+				if (fvx == d_reg)
 					state <= `STATE_SETUP_R1;
 				else
-					d_reg <= d_reg + 1;
+					d_reg <= d_reg + 1'b1;
+			end
+			`STATE_RPL_R: begin
+				d_new <= rpl[bytecounter];
+				d_write <= 1;
+				d_reg <= bytecounter;
+				
+				if (fvx == bytecounter)
+					state <= `STATE_SETUP_R1;
+				else
+					bytecounter <= bytecounter + 1'b1;
 			end
 			`STATE_STORE_BCD_1: begin
 				ram_en <= 1'd1;
