@@ -114,14 +114,14 @@ wire ps2_data;
 wire ps2_clk;
 
 localparam CONF_STR = {
-	"Chip;CH8;",
-	"O1,Monitor,4:3,16:9;",
-	"O2,Speed,Fast,Slow;"
+	"SuperChip;CH8;",
+	"O1,Monitor type,4:3,16:9;",
+	"O2,CPU Speed,Fast,Slow;"
 };
 
 wire [1:0] buttons;
 
-user_io #(.STRLEN(9 + 20 + 19)) UserIO(
+user_io #(.STRLEN(14 + 25 + 23)) UserIO(
 	.conf_str		(CONF_STR			),
 
 	.SPI_CLK     	(SPI_SCK          ),
