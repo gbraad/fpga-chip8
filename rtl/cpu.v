@@ -146,7 +146,7 @@ reg [7:0] instr_buf;
 
 wire [15:0] instr = {instr_buf, ram_out};
 
-wire [3:0] fvx = instr[15:12] == 4'hB ? 0 : instr[11:8];
+wire [3:0] fvx = instr[15:12] == 4'hB ? 4'd0 : instr[11:8];
 wire [3:0] fvy = instr[7:4];
 wire [7:0] fkk = instr[7:0];
 

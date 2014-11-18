@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton S�rensen
+	Copyright (C) 2013-2014  Carsten Elton Sorensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -16,29 +16,29 @@
 */
 
 module vga_block(
-	// VGA clock
-	input					clk,
-	input					res,
+	input				clk,
+	input				res,
 	
-	// Hires or lores mode
-	input					hires,
-	input					wide,
+	input				hires,	// hires or lores mode
+	input				wide,		// widescreen
 
 	// Output
-	output				hSync,
-	output				vSync,
-	output				vOutside,	// high when not displaying the framebuffer
+	output			hsync,
+	output			vsync,
+	output			beam_outside,	// high when not displaying the framebuffer
 	
-	output	[2:0] 	r,
-	output	[2:0] 	g,
-	output	[1:0]		b,
+	output [2:0] 	red,
+	output [2:0] 	green,
+	output [1:0]	blue,
 	
 	// Framebuffer
-	output	[8:0]		fbAddr,
-	input		[15:0]	fbData);
+	output [8:0]	fbuf_addr,
+	input  [15:0]	fbuf_data
+);
 
 
 // VGA configuration
+
 localparam hSyncStart = 16;
 localparam hBackStart = 16 + 96;
 localparam hDispStart = 16 + 96 + 48;
@@ -49,29 +49,39 @@ localparam vBackStart = 11 + 2;
 localparam vDispStart = 11 + 2 + 31;
 localparam vEnd       = 524 - 1;
 
-wire hSyncSignal;
-wire vSyncSignal;
-wire displayLineStart = hPos == 0 && vPos >= vDispStart;
+// positive sync signals from sync generator
+wire hsync_syncgen;
+wire vsync_syncgen;
 
-wire[10:0] hPos, vPos;
-wire[10:0] pixelX, pixelY;
-wire dispEnable;
+assign vsync = !vsync_syncgen;
+assign hsync = hsync_syncgen;
+
+// Raw pixel/line counter
+wire[10:0] hpos, vpos;
+
+// The actual pixel
+wire[10:0] pixel_x, pixel_y;
+
+wire display_enable;
+
+wire display_line_start = hpos == 0 && vpos >= vDispStart;
+
+
 
 // Sync generator
 	
-vga_sync VGASync(
+vga_sync SyncGenerator(
 	clk,
 	res,
 	
 	hSyncStart, hBackStart, hDispStart, hEnd,
 	vSyncStart, vBackStart, vDispStart, vEnd,
-	hSyncSignal, vSyncSignal,
-	hPos, vPos,
-	pixelX, pixelY, dispEnable
+	hsync_syncgen, vsync_syncgen,
+	hpos, vpos,
+	pixel_x, pixel_y, display_enable
 );
-	
-assign vSync = !vSyncSignal;
-assign hSync = hSyncSignal;
+
+// Display generator
 
 display Display(
 	clk,
@@ -79,12 +89,12 @@ display Display(
 	
 	hires,
 	wide,
-	dispEnable,
-	pixelX, pixelY,
-	r, g, b,
-	vSyncSignal, displayLineStart,
-	fbAddr, fbData,
-	vOutside
+	display_enable,
+	pixel_x, pixel_y,
+	red, green, blue,
+	vsync_syncgen, display_line_start,
+	fbuf_addr, fbuf_data,
+	beam_outside
 );
 
 endmodule

@@ -254,7 +254,7 @@ wire [6:0] spriteLastLine = (hires ? destY[5:0] : destY[4:0]) + spriteHeightLess
 
 wire [5:0] playfieldLastLine = hires ? 6'd63 : 6'd31;
 
-wire [3:0] excessLines = spriteLastLine > playfieldLastLine ? spriteLastLine - playfieldLastLine : 0;
+wire [3:0] excessLines = spriteLastLine > playfieldLastLine ? spriteLastLine - playfieldLastLine : 4'd0;
 
 
 //

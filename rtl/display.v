@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sï¿½rensen
+	Copyright (C) 2013-2014  Carsten Elton Sorensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -16,25 +16,25 @@
 */
 
 module display(
-	input						clk,
-	input						res,
+	input	clk,
+	input	res,
 	
-	input						hires,
-	input						wide,
-	input						pixelEnable,
+	input	hires,
+	input	wide,
+	input	pixelEnable,
 	
-	input		[10:0]		pixelX, pixelY,
-	output	[2:0]			r,
-	output	[2:0]			g,
-	output	[1:0]			b,
+	input	 [10:0]	pixelX, pixelY,
+	output [2:0]	red,
+	output [2:0]	green,
+	output [1:0]	blue,
 	
-	input						frameStart,
-	input						lineStart,
+	input				frameStart,
+	input				lineStart,
 	
-	output reg	[8:0]		fbAddr,
-	input			[15:0]	fbData,
+	output reg [8:0]	fbuf_addr,
+	input		  [15:0]	fbuf_data,
 	
-	output					outsidePlayfield
+	output	outsidePlayfield
 );
 
 wire pixel;
@@ -54,30 +54,30 @@ assign outsidePlayfield = !inPlayfield;
 
 always @ (posedge clk) begin : AddressGenerator
 	if (res) begin
-		fbAddr <= 0;
+		fbuf_addr <= 0;
 		lineAddr <= 0;
 		hPixelCounter <= 0;
 		vPixelCounter <= 0;
 	end else if (frameStart) begin
-		fbAddr <= 0;
+		fbuf_addr <= 0;
 		lineAddr <= 0;
 		vPixelCounter <= vPixelMult - 1'b1;
 	end else if(inPlayfield) begin
 		if (lineStart) begin
-			fbAddr <= lineAddr;
+			fbuf_addr <= lineAddr;
 			if (vPixelCounter == 0) begin
 				vPixelCounter <= vPixelMult - 1'b1;
 				lineAddr <= lineAddr + (fieldPixelWidth >> 4);
 			end else begin
 				vPixelCounter <= vPixelCounter - 1'b1;
 			end;
-			hPixelCounter <= {hPixelMult,4'd0} - 1'b1;
+			hPixelCounter <= {hPixelMult, 4'd0} - 1'b1;
 		end else if (pixelEnable) begin
 			if (hPixelCounter == 0) begin
 				hPixelCounter <= {hPixelMult,4'd0} - 1'b1;
 			end else begin
 				if (hPixelCounter == 8)
-					fbAddr <= fbAddr + 1'd1;
+					fbuf_addr <= fbuf_addr + 1'd1;
 					
 				hPixelCounter <= hPixelCounter - 1'b1;
 			end;
@@ -90,15 +90,15 @@ wire [1:0] color =
 	(inPlayfield && pixelEnable) ? {1'b1, pixel} :
 	2'd0;
 
-assign {r,g,b} =
+assign {red, green, blue} =
 	color == 0 ? 8'h00 :
 	color == 1 ? 8'hFF :
-	color == 2 ? {3'd6,3'd6,2'd1} :
-	{3'd3,3'd3,2'd1};
+	color == 2 ? {3'd6, 3'd6, 2'd1} :
+	{3'd3, 3'd3, 2'd1};
 
 bit_shifter Shifter(
 	clk,
-	fbData,
+	fbuf_data,
 	pixelX == -11'h4,
 	pixelEnable,
 	hPixelMult - 1'b1,
