@@ -16,22 +16,36 @@
 */
 
 module chip8(
-	input vgaClk,	 // 25.152.000 Hz clock
-	input cpu_clk,	 // 20.000 Hz clock
-	input blit_clk, // 100.000.000 Hz clock, or as fast as it can get
+	input		res,
 	
-	input cpu_halt,
+	input		vgaClk,	 // 25.152.000 Hz clock
+	input		cpu_clk,	 // 20.000 Hz clock
+	input		blit_clk, // 100.000.000 Hz clock, or as fast as it can get. cpu_clk must be derived from this
 	
-	output Hsync,
-	output Vsync,
-	output	[2:0]	vgaRed,
-	output	[2:0]	vgaGreen,
-	output	[2:1]	vgaBlue,
+	input		cpu_halt,
 	
-	output [15:0] currentOpcode,
+	input		wide,
+	
+	output			Hsync,
+	output			Vsync,
+	output [2:0]	vgaRed,
+	output [2:0]	vgaGreen,
+	output [2:1]	vgaBlue,
+	
+	output [15:0]	currentOpcode,
+	
+	output			audio_enable,
 	
 	input PS2KeyboardData,
-	input PS2KeyboardClk
+	input PS2KeyboardClk,
+	
+	input				uploading,
+	input				upload_en,
+	input				upload_clk,
+	input [11:0]	upload_addr,
+	input [7:0]		upload_data,
+	
+	output	error
 );
 
 wire			vgaHires;
@@ -116,7 +130,7 @@ task updateKey;
 			8'h2A: keyboardMatrix[4'hF] = value;
 		endcase
 	end
-endtask;
+endtask
 
 ps2in Keyboard(
 	.ps2clk(PS2KeyboardClk),
@@ -132,20 +146,20 @@ always @ (posedge keyboardReady) begin
 	if (keyboardData == 8'hF0) begin
 		kbdDown = 0;
 	end else begin
-		updateKey(.code(keyboardData), .value(kbdDown));
+		updateKey(keyboardData, kbdDown);
 		kbdDown = 1;
 	end;
-end;
+end
 
 // CPU memory
 
 cpu_memory CPUMemory (
-	.a_clk(cpu_clk),
-	.a_en(cpu_en),
-	.a_write(cpu_write),
-	.a_out(cpu_out),
-	.a_in(cpu_in),
-	.a_addr(cpu_addr),
+	.a_clk  (uploading ? upload_clk : cpu_clk),
+	.a_en   (uploading ? upload_en : cpu_en),
+	.a_write(uploading ? 1'b1 : cpu_wr),
+	.a_out  (cpu_out),
+	.a_in   (uploading ? upload_data : cpu_in),
+	.a_addr (uploading ? upload_addr : cpu_addr),
 	
 	.b_out(cbuf_out),
 	.b_addr(cbuf_addr),
@@ -155,6 +169,7 @@ cpu_memory CPUMemory (
 vga_block VGA(
 	.clk(vgaClk),
 	.hires(vgaHires),
+	.wide(wide),
 	
 	.hSync(Hsync),
 	.vSync(Vsync),
@@ -192,21 +207,28 @@ blitter Blitter(
 
 // CPU
 
+wire cpu_blit_ready;
+util_sync_domain sync_blit_ready(cpu_clk, res, blit_ready, cpu_blit_ready);
+
 cpu CPU(
+	.res(res),
+	
 	.clk(cpu_clk),
 	.clk_60hz(Vsync),
 	.vsync(vgaOutside),
-	.halt(cpu_halt || !blit_ready),
+	.halt(cpu_halt || uploading || !cpu_blit_ready),
 	
 	.keyMatrix(keyboardMatrix),
 	
 	.ram_en(cpu_en),
-	.ram_wr(cpu_write),
+	.ram_wr(cpu_wr),
 	.ram_out(cpu_out),
 	.ram_in(cpu_in),
 	.ram_addr(cpu_addr),
 
 	.hires(vgaHires),
+	
+	.audio_enable(audio_enable),
 
 	.blit_op(blit_op),
 	.blit_src(blit_src),
@@ -214,10 +236,12 @@ cpu CPU(
 	.blit_destX(blit_destX),
 	.blit_destY(blit_destY),
 	.blit_enable(blit_enable),
-	.blit_done(blit_ready),
+	.blit_done(cpu_blit_ready),
 	.blit_collision(blit_collision),
 	
-	.cur_instr(currentOpcode)
+	.cur_instr(currentOpcode),
+
+	.error(error)
 );
 	
 

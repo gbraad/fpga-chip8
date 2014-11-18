@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton S�rensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,7 +17,10 @@
 
 module display(
 	input						clk,
+	input						res,
+	
 	input						hires,
+	input						wide,
 	input						pixelEnable,
 	
 	input		[10:0]		pixelX, pixelY,
@@ -37,20 +40,25 @@ module display(
 wire pixel;
 
 wire[7:0] fieldPixelWidth = hires ? 8'd128 : 8'd64;
-wire[6:0] fieldPixelHeight = hires ? 7'd64 : 7'd32;
+//wire[6:0] fieldPixelHeight = hires ? 7'd64 : 7'd32;
 wire[3:0] hPixelMult = hires ? 4'd5 : 4'd10;
-wire[3:0] vPixelMult = hires ? 4'd6 : 4'd12;
+wire[3:0] vPixelMult = wide ? (hires ? 4'd6 : 4'd12) : hPixelMult;
 
 reg[7:0] hPixelCounter = 0;
 reg[3:0] vPixelCounter = 0;
 
 reg[8:0] lineAddr = 0;
 
-wire inPlayfield = pixelY >= 48 && pixelY < 432;
+wire inPlayfield = wide ? (pixelY >= 48 && pixelY < 432) : (pixelY >= 80 && pixelY < 400);
 assign outsidePlayfield = !inPlayfield;
 
 always @ (posedge clk) begin : AddressGenerator
-	if (frameStart) begin
+	if (res) begin
+		fbAddr <= 0;
+		lineAddr <= 0;
+		hPixelCounter <= 0;
+		vPixelCounter <= 0;
+	end else if (frameStart) begin
 		fbAddr <= 0;
 		lineAddr <= 0;
 		vPixelCounter <= vPixelMult - 1'b1;
@@ -75,12 +83,12 @@ always @ (posedge clk) begin : AddressGenerator
 			end;
 		end;
 	end;
-end;
+end
 
 wire [1:0] color =
-	(pixelEnable) && (pixelY == 0 || pixelY == 479) ? 1 :
-	(inPlayfield && pixelEnable) ? {1'b1,pixel} :
-	0;
+	(pixelEnable) && (pixelY == 0 || pixelY == 479) ? 2'd1 :
+	(inPlayfield && pixelEnable) ? {1'b1, pixel} :
+	2'd0;
 
 assign {r,g,b} =
 	color == 0 ? 8'h00 :

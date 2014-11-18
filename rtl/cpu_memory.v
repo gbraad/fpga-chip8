@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sørensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -33,25 +33,35 @@ module cpu_memory(
 reg [7:0] ram [0:4095];
 
 initial begin
-	$readmemh("font_small.vh", ram, 0, 128 - 1);
-	$readmemh("font_large.vh", ram, 128, 128 + 160 - 1);
-//	$readmemh("../games/ant.vh", ram, 512);
+	$readmemh("../rom/font_large.vh", ram, 0, 255);
+	$readmemh("../rom/font_small.vh", ram, 256, 383);
+	$readmemh("../rom/reset.vh", ram, 384, 511);
+	$readmemh("../rom/title.vh", ram, 512);
+	
+//	$readmemh("../games/addition.vh", ram, 512);
 //	$readmemh("../games/alien.vh", ram, 512);
-	$readmemh("../games/blinky.vh", ram, 512);
+//	$readmemh("../games/ant.vh", ram, 512);
+//	$readmemh("../games/blinky.vh", ram, 512);
 //	$readmemh("../games/car.vh", ram, 512);
 //	$readmemh("../games/field.vh", ram, 512);
 //	$readmemh("../games/hpiper.vh", ram, 512);
 //	$readmemh("../games/joust.vh", ram, 512);
 //	$readmemh("../games/laser.vh", ram, 512);
+//	$readmemh("../games/loopz.vh", ram, 512);
 //	$readmemh("../games/pong.vh", ram, 512);
+//	$readmemh("../games/fontdump.vh", ram, 512);
+//	$readmemh("../games/rpltest.vh", ram, 512);
 end
 
 always @(posedge a_clk) begin
 	if (a_en) begin
+		// Write protect the lower 512 bytes (charset)
 		if (a_write) begin
-			ram[a_addr] <= a_in;
+			if (|a_addr[11:9])
+				ram[a_addr] <= a_in;
+		end else begin
+			a_out <= ram[a_addr];
 		end
-		a_out <= ram[a_addr];
 	end
 end
 

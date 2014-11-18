@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sørensen
+	Copyright (C) 2013  Carsten Elton Sï¿½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -18,9 +18,11 @@
 module vga_block(
 	// VGA clock
 	input					clk,
+	input					res,
 	
 	// Hires or lores mode
 	input					hires,
+	input					wide,
 
 	// Output
 	output				hSync,
@@ -40,12 +42,12 @@ module vga_block(
 localparam hSyncStart = 16;
 localparam hBackStart = 16 + 96;
 localparam hDispStart = 16 + 96 + 48;
-localparam hTotal     = 800;
+localparam hEnd       = 800 - 1;
 	
 localparam vSyncStart = 11;
 localparam vBackStart = 11 + 2;
 localparam vDispStart = 11 + 2 + 31;
-localparam vTotal     = 524;
+localparam vEnd       = 524 - 1;
 
 wire hSyncSignal;
 wire vSyncSignal;
@@ -59,23 +61,30 @@ wire dispEnable;
 	
 vga_sync VGASync(
 	clk,
-	hSyncStart, hBackStart, hDispStart, hTotal,
-	vSyncStart, vBackStart, vDispStart, vTotal,
+	res,
+	
+	hSyncStart, hBackStart, hDispStart, hEnd,
+	vSyncStart, vBackStart, vDispStart, vEnd,
 	hSyncSignal, vSyncSignal,
 	hPos, vPos,
-	pixelX, pixelY, dispEnable);
+	pixelX, pixelY, dispEnable
+);
 	
 assign vSync = !vSyncSignal;
 assign hSync = hSyncSignal;
 
 display Display(
 	clk,
+	res,
+	
 	hires,
+	wide,
 	dispEnable,
 	pixelX, pixelY,
 	r, g, b,
 	vSyncSignal, displayLineStart,
 	fbAddr, fbData,
-	vOutside);
+	vOutside
+);
 
 endmodule
