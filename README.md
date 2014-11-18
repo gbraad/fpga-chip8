@@ -4,7 +4,7 @@ This is a Verilog implementation of the SuperChip virtual machine. The implement
 
 The core currently runs on the Digilent Nexys 3 board and the MiST. The MiST is the preferred platform, as it provides an excellent OSD and USB stack, which is much easier to use.
 
-For an introduction to Chip-8 and SuperChip, please see [https://en.wikipedia.org/wiki/CHIP-8](the Chip-8 article on Wikipedia). Another great resource is http://chip8.com/, particularly the [http://chip8.com/downloads/Chip-8%20Pack.zip](pack of all known ROMs) for Chip-8 is handy.
+For an introduction to Chip-8 and SuperChip, please see [the Chip-8 article on Wikipedia](https://en.wikipedia.org/wiki/CHIP-8). Another great resource is http://chip8.com/, particularly the [pack of all known ROMs](http://chip8.com/downloads/Chip-8%20Pack.zip) for Chip-8 is handy.
 
 SuperChip has traditionally been implemented as a virtual machine, but this is a pure Verilog implementation of the CPU, display and blitter. The CPU runs at a user selectable speed of a whopping 5 kHz or 12.5 kHz. An instruction usually takes 5 cycles, some a bit longer. The blitter runs at a much faster clock rate than the CPU, 50 MHz on the MiST, so sprite and scroll instructions only add a couple of cycles, if any.
 
@@ -20,10 +20,8 @@ The menu also allows the CPU speed to be selected. Some games are better played 
 
 The Chip-8 machine has a hex keypad for input. This has been mapped to the PC keyboard as follows:
 
-`
-Chip-8:   PS/2:
-1 2 3 C   1 2 3 4
-4 5 6 D   Q W E R
-7 8 9 E   A S D F
-A 0 B F   Z X C V
-`
+    Chip-8:   PS/2:
+    1 2 3 C   1 2 3 4
+    4 5 6 D   Q W E R
+    7 8 9 E   A S D F
+    A 0 B F   Z X C V
