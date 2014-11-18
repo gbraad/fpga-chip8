@@ -25,3 +25,7 @@ The Chip-8 machine has a hex keypad for input. This has been mapped to the PC ke
     4 5 6 D   Q W E R
     7 8 9 E   A S D F
     A 0 B F   Z X C V
+
+# Download #
+
+Downloads can be found on the [files page](https://bitbucket.org/csoren/fpga-chip8/downloads)
