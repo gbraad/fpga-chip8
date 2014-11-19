@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton SÃƒÂ¯Ã‚Â¿Ã‚Â½rensen
+	Copyright (C) 2013  Carsten Elton SÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -59,19 +59,19 @@ wire cpu_clk_slow;
 wire cpu_clk = status_cpu_slow ? cpu_clk_slow : cpu_clk_fast;
 
 mist_pll	mist_pll_inst (
-//	.areset ( areset_sig ),
-	.inclk0 ( CLOCK_27[0] ),
-	.c0 ( clk_50M ),
-	.c1 ( clk_25M ),
-	.c2 ( clk_12k )
+	.inclk0 (CLOCK_27[0]),
+
+	.c0 (clk_50M),
+	.c1 (clk_25M),
+	.c2 (clk_12k)
 );
 
-reg [4:0] audio_pwm;
+reg [4:0] audio_count;
 always @(posedge clk_12k)
-	audio_pwm <= audio_pwm + 1'b1;
+	audio_count <= audio_count + 1'b1;
 
 wire audio_enable;
-wire audio = audio_enable && &audio_pwm[4:3];
+wire audio = audio_enable && &audio_count[4:3];
 assign AUDIO_R = audio;
 assign AUDIO_L = audio;
 

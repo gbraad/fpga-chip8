@@ -42,12 +42,12 @@ module vga_block(
 localparam hSyncStart = 16;
 localparam hBackStart = 16 + 96;
 localparam hDispStart = 16 + 96 + 48;
-localparam hEnd       = 800 - 1;
+localparam hDispEnd   = 800 - 1;
 	
 localparam vSyncStart = 11;
 localparam vBackStart = 11 + 2;
 localparam vDispStart = 11 + 2 + 31;
-localparam vEnd       = 524 - 1;
+localparam vDispEnd   = 524 - 1;
 
 // positive sync signals from sync generator
 wire hsync_syncgen;
@@ -64,37 +64,60 @@ wire[10:0] pixel_x, pixel_y;
 
 wire display_enable;
 
-wire display_line_start = hpos == 0 && vpos >= vDispStart;
-
 
 
 // Sync generator
 	
 vga_sync SyncGenerator(
-	clk,
-	res,
+	.clk (clk),
+	.res (res),
 	
-	hSyncStart, hBackStart, hDispStart, hEnd,
-	vSyncStart, vBackStart, vDispStart, vEnd,
-	hsync_syncgen, vsync_syncgen,
-	hpos, vpos,
-	pixel_x, pixel_y, display_enable
+	.h_sync_start (hSyncStart),
+	.h_back_start (hBackStart),
+	.h_disp_start (hDispStart),
+	.h_disp_end   (hDispEnd),
+	
+	.v_sync_start (vSyncStart),
+	.v_back_start (vBackStart),
+	.v_disp_start (vDispStart),
+	.v_disp_end   (vDispEnd),
+	
+	.h_sync (hsync_syncgen),
+	.v_sync (vsync_syncgen),
+	
+	.h_pos (hpos),
+	.v_pos (vpos),
+
+	.h_pixel (pixel_x),
+	.v_pixel (pixel_y),
+	
+	.pixel_enable (display_enable)
 );
 
 // Display generator
 
 display Display(
-	clk,
-	res,
+	.clk (clk),
+	.res (res),
 	
-	hires,
-	wide,
-	display_enable,
-	pixel_x, pixel_y,
-	red, green, blue,
-	vsync_syncgen, display_line_start,
-	fbuf_addr, fbuf_data,
-	beam_outside
+	.hires (hires),
+	.wide  (wide),
+	
+	.enable_pixel (display_enable),
+	.h_pixel      (pixel_x),
+	.v_pixel      (pixel_y),
+	
+	.red   (red),
+	.green (green),
+	.blue  (blue),
+	
+	.vsync (vsync_syncgen),
+	.hsync (hpos == 0),
+	
+	.fbuf_addr (fbuf_addr),
+	.fbuf_data (fbuf_data),
+	
+	.outside_playfield (beam_outside)
 );
 
 endmodule

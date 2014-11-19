@@ -21,73 +21,85 @@ module display(
 	
 	input	hires,
 	input	wide,
-	input	pixelEnable,
+
+	input			 enable_pixel,
+	input	[10:0] h_pixel,
+	input [10:0] v_pixel,
 	
-	input	 [10:0]	pixelX, pixelY,
-	output [2:0]	red,
-	output [2:0]	green,
-	output [1:0]	blue,
+	output [2:0] red,
+	output [2:0] green,
+	output [1:0] blue,
 	
-	input				frameStart,
-	input				lineStart,
+	input	vsync,	// positive vsync
+	input hsync,
 	
 	output reg [8:0]	fbuf_addr,
 	input		  [15:0]	fbuf_data,
 	
-	output	outsidePlayfield
+	output	outside_playfield
 );
 
-wire pixel;
+wire[7:0] display_pixel_width = hires ? 8'd128 : 8'd64;
 
-wire[7:0] fieldPixelWidth = hires ? 8'd128 : 8'd64;
-//wire[6:0] fieldPixelHeight = hires ? 7'd64 : 7'd32;
-wire[3:0] hPixelMult = hires ? 4'd5 : 4'd10;
-wire[3:0] vPixelMult = wide ? (hires ? 4'd6 : 4'd12) : hPixelMult;
+wire[3:0] h_pixel_mult = hires ? 4'd5 : 4'd10;
+wire[3:0] v_pixel_mult = wide ? (hires ? 4'd6 : 4'd12) : h_pixel_mult;
 
-reg[7:0] hPixelCounter = 0;
-reg[3:0] vPixelCounter = 0;
+reg[7:0] fbuf_h_pixel = 0;
+reg[3:0] fbuf_v_pixel = 0;
 
-reg[8:0] lineAddr = 0;
+reg[8:0] fbuf_line_addr = 0;
 
-wire inPlayfield = wide ? (pixelY >= 48 && pixelY < 432) : (pixelY >= 80 && pixelY < 400);
-assign outsidePlayfield = !inPlayfield;
+wire inside_playfield = wide ? (v_pixel >= 48 && v_pixel < 432) : (v_pixel >= 80 && v_pixel < 400);
+assign outside_playfield = !inside_playfield;
 
 always @ (posedge clk) begin : AddressGenerator
 	if (res) begin
 		fbuf_addr <= 0;
-		lineAddr <= 0;
-		hPixelCounter <= 0;
-		vPixelCounter <= 0;
-	end else if (frameStart) begin
+		fbuf_line_addr <= 0;
+		fbuf_h_pixel <= 0;
+		fbuf_v_pixel <= 0;
+	end else if (vsync) begin
 		fbuf_addr <= 0;
-		lineAddr <= 0;
-		vPixelCounter <= vPixelMult - 1'b1;
-	end else if(inPlayfield) begin
-		if (lineStart) begin
-			fbuf_addr <= lineAddr;
-			if (vPixelCounter == 0) begin
-				vPixelCounter <= vPixelMult - 1'b1;
-				lineAddr <= lineAddr + (fieldPixelWidth >> 4);
+		fbuf_line_addr <= 0;
+		fbuf_v_pixel <= v_pixel_mult - 1'b1;
+	end else if(inside_playfield) begin
+		if (hsync) begin
+			fbuf_addr <= fbuf_line_addr;
+			if (fbuf_v_pixel == 0) begin
+				fbuf_v_pixel <= v_pixel_mult - 1'b1;
+				fbuf_line_addr <= fbuf_line_addr + (display_pixel_width >> 4);
 			end else begin
-				vPixelCounter <= vPixelCounter - 1'b1;
+				fbuf_v_pixel <= fbuf_v_pixel - 1'b1;
 			end;
-			hPixelCounter <= {hPixelMult, 4'd0} - 1'b1;
-		end else if (pixelEnable) begin
-			if (hPixelCounter == 0) begin
-				hPixelCounter <= {hPixelMult,4'd0} - 1'b1;
+			fbuf_h_pixel <= {h_pixel_mult, 4'd0} - 1'b1;
+		end else if (enable_pixel) begin
+			if (fbuf_h_pixel == 0) begin
+				fbuf_h_pixel <= {h_pixel_mult,4'd0} - 1'b1;
 			end else begin
-				if (hPixelCounter == 8)
+				if (fbuf_h_pixel == 8)
 					fbuf_addr <= fbuf_addr + 1'd1;
 					
-				hPixelCounter <= hPixelCounter - 1'b1;
+				fbuf_h_pixel <= fbuf_h_pixel - 1'b1;
 			end;
 		end;
 	end;
 end
 
+wire pixel;
+
+bit_shifter Shifter(
+	.clk    (clk),
+	.enable (enable_pixel),
+	.load   (h_pixel == -11'h4),
+	.mult   (h_pixel_mult - 1'b1),
+	
+	.d (fbuf_data),
+	.q (pixel)
+);
+
 wire [1:0] color =
-	(pixelEnable) && (pixelY == 0 || pixelY == 479) ? 2'd1 :
-	(inPlayfield && pixelEnable) ? {1'b1, pixel} :
+	(enable_pixel) && (v_pixel == 0 || v_pixel == 479) ? 2'd1 :
+	(inside_playfield && enable_pixel) ? {1'b1, pixel} :
 	2'd0;
 
 assign {red, green, blue} =
@@ -96,12 +108,5 @@ assign {red, green, blue} =
 	color == 2 ? {3'd6, 3'd6, 2'd1} :
 	{3'd3, 3'd3, 2'd1};
 
-bit_shifter Shifter(
-	clk,
-	fbuf_data,
-	pixelX == -11'h4,
-	pixelEnable,
-	hPixelMult - 1'b1,
-	pixel);
 
 endmodule
