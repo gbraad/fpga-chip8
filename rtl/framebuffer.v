@@ -30,15 +30,16 @@ module framebuffer(
 
 reg [15:0] ram [0:511];
 
-always @(posedge vga_clk)
-	vga_out <= ram[vga_addr];
-	
 always @(posedge clk) begin
 	if (fbuf_en) begin
-		fbuf_out <= ram[fbuf_addr];
 		if (fbuf_write)
 			ram[fbuf_addr] <= fbuf_in;
+		else
+			fbuf_out <= ram[fbuf_addr];
 	end
 end
+
+always @(posedge vga_clk)
+	vga_out <= ram[vga_addr];
 
 endmodule
