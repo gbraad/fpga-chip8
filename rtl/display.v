@@ -20,6 +20,7 @@ module display(
 	input	res,
 	
 	input	hires,
+	input	ntsc,
 	input	wide,
 
 	input			 enable_pixel,
@@ -42,14 +43,18 @@ module display(
 wire[7:0] display_pixel_width = hires ? 8'd128 : 8'd64;
 
 wire[3:0] h_pixel_mult = hires ? 4'd5 : 4'd10;
-wire[3:0] v_pixel_mult = wide ? (hires ? 4'd6 : 4'd12) : h_pixel_mult;
+wire[3:0] v_pixel_mult_VGA = wide ? (hires ? 4'd6 : 4'd12) : h_pixel_mult;
+wire[3:0] v_pixel_mult_NTSC = wide ? (hires ? 4'd3 : 4'd6) : (hires ? 4'd2 : 4'd4);
+wire[3:0] v_pixel_mult = ntsc ? v_pixel_mult_NTSC : v_pixel_mult_VGA;
 
 reg[7:0] fbuf_h_pixel = 0;
 reg[3:0] fbuf_v_pixel = 0;
 
 reg[8:0] fbuf_line_addr = 0;
 
-wire inside_playfield = wide ? (v_pixel >= 48 && v_pixel < 432) : (v_pixel >= 80 && v_pixel < 400);
+wire inside_playfield_VGA = wide ? (v_pixel >= 48 && v_pixel < 432) : (v_pixel >= 80 && v_pixel < 400);
+wire inside_playfield_NTSC = wide ? (v_pixel >= 32 && v_pixel < 208) : (v_pixel >= 64 && v_pixel < 192);
+wire inside_playfield = ntsc ? inside_playfield_NTSC : inside_playfield_VGA;
 assign outside_playfield = !inside_playfield;
 
 always @ (posedge clk) begin : AddressGenerator

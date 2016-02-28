@@ -48,7 +48,12 @@ module mist_top(
 
 wire clk_50M;
 wire clk_25M;
+wire clk_13_5M;
 wire clk_12k;
+
+wire disable_scandoubler;
+
+wire clk_disp = disable_scandoubler ? clk_13_5M : clk_25M;
 
 wire [7:0] status;
 wire status_monitor_wide = status[1];
@@ -63,7 +68,8 @@ mist_pll	mist_pll_inst (
 
 	.c0 (clk_50M),
 	.c1 (clk_25M),
-	.c2 (clk_12k)
+	.c2 (clk_12k),
+	.c3 (clk_13_5M)
 );
 
 reg [4:0] audio_count;
@@ -134,6 +140,7 @@ user_io #(.STRLEN(14 + 25 + 23)) UserIO(
 //   .SWITCHES      (switches         ),
 	.BUTTONS       (buttons          ),
 
+	.disable_scandoubler(disable_scandoubler),
 //   .JOY0          (joyA             ),
 //   .JOY1          (joyB             ),
 
@@ -190,7 +197,7 @@ wire chip8_hs;
 wire chip8_vs;
 
 osd OSD(
-	clk_25M,
+	clk_disp,
 	
 	SPI_SCK,
 	SPI_SS3,
@@ -210,11 +217,12 @@ wire [15:0] current_opcode;
 chip8 chip8machine(
 	res,
 	
-	clk_25M,
+	clk_disp,
 	cpu_clk,
 	clk_50M,
 	
 	uploading,
+	disable_scandoubler,
 	status_monitor_wide,
 	
 	chip8_hs, chip8_vs,

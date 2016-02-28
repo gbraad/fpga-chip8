@@ -18,12 +18,13 @@
 module chip8(
 	input				res,
 	
-	input				vga_clk,	 // 25.152.000 Hz clock
+	input				disp_clk,	 // 13.500.000 or 25.152.000 Hz clock
 	input				cpu_clk,	 // 20.000 Hz clock
 	input				blit_clk, // 100.000.000 Hz clock, or as fast as it can get.
 	
 	input				cpu_halt,
 	
+	input				ntsc,
 	input				vga_wide,
 	
 	output			vga_hsync,
@@ -89,7 +90,7 @@ wire			blit_collision;
 // VGA framebuffer
 
 framebuffer VGAFramebuffer(
-	vga_clk,
+	disp_clk,
 	vga_fbuf_addr,
 	vga_fbuf_data,
 
@@ -156,8 +157,9 @@ cpu_memory CpuMemory(
 );
 
 vga_block Vga(
-	.clk   (vga_clk),
+	.clk   (disp_clk),
 
+	.ntsc  (ntsc),
 	.hires (vga_hires),
 	.wide  (vga_wide),
 	
