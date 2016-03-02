@@ -6,6 +6,9 @@ module osd (
 	// avoid jitter.
 	input 			pclk,
 
+	// disable scandoubling
+	input          disable_scandoubler,
+	
 	// SPI interface
 	input         sck,
 	input         ss,
@@ -31,7 +34,7 @@ parameter OSD_Y_OFFSET = 10'd0;
 parameter OSD_COLOR    = 3'd0;
 
 localparam OSD_WIDTH  = 10'd256;
-localparam OSD_HEIGHT = 10'd128;
+wire [9:0] OSD_HEIGHT = disable_scandoubler ? 10'd64 : 10'd128;
 
 // *********************************************************************************
 // spi client
@@ -163,7 +166,7 @@ end
 wire osd_de = osd_enable && h_osd_active && v_osd_active;
 
 wire [7:0] osd_hcnt = h_cnt - h_osd_start + 7'd1;  // one pixel offset for osd_byte register
-wire [6:0] osd_vcnt = v_cnt - v_osd_start;
+wire [6:0] osd_vcnt = (v_cnt - v_osd_start) << disable_scandoubler;
 
 wire osd_pixel = osd_byte[osd_vcnt[3:1]];
 

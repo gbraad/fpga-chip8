@@ -195,9 +195,16 @@ wire [5:0] chip8_G;
 wire [5:0] chip8_B;
 wire chip8_hs;
 wire chip8_vs;
+wire osd_hs;
+wire osd_vs;
+
+assign VGA_HS = disable_scandoubler ? osd_hs & osd_vs : osd_hs;
+assign VGA_VS = disable_scandoubler ? 1'b1 : osd_vs;
 
 osd OSD(
 	clk_disp,
+	
+	disable_scandoubler,
 	
 	SPI_SCK,
 	SPI_SS3,
@@ -207,7 +214,7 @@ osd OSD(
 	chip8_hs, chip8_vs,
 
 	VGA_R, VGA_G, VGA_B,
-	VGA_HS, VGA_VS
+	osd_hs, osd_vs
 );
 
 // Chip-8 machine
