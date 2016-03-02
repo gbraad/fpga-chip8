@@ -24,8 +24,8 @@ module vga_block(
 	input				wide,		// widescreen
 
 	// Output
-	output			hsync,
-	output			vsync,
+	output reg		hsync,
+	output reg		vsync,
 	output			beam_outside,	// high when not displaying the framebuffer
 	
 	output [2:0] 	red,
@@ -40,35 +40,50 @@ module vga_block(
 
 // VGA configuration (640x480)
 
-wire [10:0] hSyncStart_VGA = 16;
-wire [10:0] hBackStart_VGA = 16 + 96;
-wire [10:0] hDispStart_VGA = 16 + 96 + 48;
-wire [10:0] hDispEnd_VGA   = 800 - 1;
+wire [10:0] hDisp_VGA      = 640;
+wire [10:0] hSyncStart_VGA = 656;
+wire [10:0] hSyncEnd_VGA   = 752;
+wire [10:0] hEnd_VGA       = 800 - 1;
+
+wire [10:0] vDisp_VGA      = 480;
+wire [10:0] vSyncStart_VGA = 491;
+wire [10:0] vSyncEnd_VGA   = 493;
+wire [10:0] vEnd_VGA       = 524 - 1;
 	
-wire [10:0] vSyncStart_VGA = 11;
-wire [10:0] vBackStart_VGA = 11 + 2;
-wire [10:0] vDispStart_VGA = 11 + 2 + 31;
-wire [10:0] vDispEnd_VGA   = 524 - 1;
+// NTSC configuration 240p (704x240)
 
-// NTSC configuration 240p (720x240)
+wire [10:0] hDisp_NTSC      = 704;
+wire [10:0] hSyncStart_NTSC = 728;
+wire [10:0] hSyncEnd_NTSC   = 791;
+wire [10:0] hEnd_NTSC       = 858 - 1;
 
-wire [10:0] hSyncStart_NTSC = 16;
-wire [10:0] hBackStart_NTSC = 16 + 64;
-wire [10:0] hDispStart_NTSC = 16 + 64 + 58;
-wire [10:0] hDispEnd_NTSC   = 858 - 1;
-	
-wire [10:0] vSyncStart_NTSC = 2;
-wire [10:0] vBackStart_NTSC = 2 + 4;
-wire [10:0] vDispStart_NTSC = 2 + 4 + 16;
-wire [10:0] vDispEnd_NTSC   = 262 - 1;
+wire [10:0] vDisp_NTSC      = 480 / 2;
+wire [10:0] vSyncStart_NTSC = 486 / 2;
+wire [10:0] vSyncEnd_NTSC   = 496 / 2;
+wire [10:0] vEnd_NTSC       = 526 / 2 - 1;
 
+// PAL configuration 288p (720x288)
+
+/*
+wire [10:0] hDisp_NTSC      = 720;
+wire [10:0] hSyncStart_NTSC = 732;
+wire [10:0] hSyncEnd_NTSC   = 795;
+wire [10:0] hEnd_NTSC       = 864 - 1;
+
+wire [10:0] vDisp_NTSC      = 576 / 2;
+wire [10:0] vSyncStart_NTSC = 581 / 2;
+wire [10:0] vSyncEnd_NTSC   = 586 / 2;
+wire [10:0] vEnd_NTSC       = 626 / 2 - 1;
+*/
 
 // positive sync signals from sync generator
 wire hsync_syncgen;
 wire vsync_syncgen;
 
-assign vsync = !vsync_syncgen;
-assign hsync = ntsc ^ hsync_syncgen;
+always @(posedge clk) begin
+	vsync <= !vsync_syncgen;
+	hsync <= ntsc ^ hsync_syncgen;
+end
 
 // Raw pixel/line counter
 wire[10:0] hpos, vpos;
@@ -78,23 +93,21 @@ wire[10:0] pixel_x, pixel_y;
 
 wire display_enable;
 
-
-
 // Sync generator
 	
 vga_sync SyncGenerator(
 	.clk (clk),
 	.res (res),
 	
+	.h_disp       (ntsc ? hDisp_NTSC      : hDisp_VGA),
 	.h_sync_start (ntsc ? hSyncStart_NTSC : hSyncStart_VGA),
-	.h_back_start (ntsc ? hBackStart_NTSC : hBackStart_VGA),
-	.h_disp_start (ntsc ? hDispStart_NTSC : hDispStart_VGA),
-	.h_disp_end   (ntsc ? hDispEnd_NTSC : hDispEnd_VGA),
+	.h_sync_end   (ntsc ? hSyncEnd_NTSC   : hSyncEnd_VGA),
+	.h_end        (ntsc ? hEnd_NTSC       : hEnd_VGA),
 	
+	.v_disp       (ntsc ? vDisp_NTSC      : vDisp_VGA),
 	.v_sync_start (ntsc ? vSyncStart_NTSC : vSyncStart_VGA),
-	.v_back_start (ntsc ? vBackStart_NTSC : vBackStart_VGA),
-	.v_disp_start (ntsc ? vDispStart_NTSC : vDispStart_VGA),
-	.v_disp_end   (ntsc ? vDispEnd_NTSC : vDispEnd_VGA),
+	.v_sync_end   (ntsc ? vSyncEnd_NTSC   : vSyncEnd_VGA),
+	.v_end        (ntsc ? vEnd_NTSC       : vEnd_VGA),
 	
 	.h_sync (hsync_syncgen),
 	.v_sync (vsync_syncgen),
@@ -110,6 +123,9 @@ vga_sync SyncGenerator(
 
 // Display generator
 
+wire[10:0] disp_pixel_x = ntsc ? pixel_x - (704 - 640) / 2 : pixel_x;
+wire disp_display_enable = display_enable & (disp_pixel_x < 640);
+
 display Display(
 	.clk (clk),
 	.res (res),
@@ -118,8 +134,8 @@ display Display(
 	.ntsc  (ntsc),
 	.wide  (wide),
 	
-	.enable_pixel (display_enable),
-	.h_pixel      (pixel_x),
+	.enable_pixel (disp_display_enable),
+	.h_pixel      (disp_pixel_x),
 	.v_pixel      (pixel_y),
 	
 	.red   (red),

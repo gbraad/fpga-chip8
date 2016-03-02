@@ -57,6 +57,9 @@ wire inside_playfield_NTSC = wide ? (v_pixel >= 32 && v_pixel < 208) : (v_pixel 
 wire inside_playfield = ntsc ? inside_playfield_NTSC : inside_playfield_VGA;
 assign outside_playfield = !inside_playfield;
 
+wire hsync_posedge;
+util_posedge hsync_posedge_inst(clk, res, hsync, hsync_posedge);
+
 always @ (posedge clk) begin : AddressGenerator
 	if (res) begin
 		fbuf_addr <= 0;
@@ -67,8 +70,9 @@ always @ (posedge clk) begin : AddressGenerator
 		fbuf_addr <= 0;
 		fbuf_line_addr <= 0;
 		fbuf_v_pixel <= v_pixel_mult - 1'b1;
-	end else if(inside_playfield) begin
-		if (hsync) begin
+		fbuf_h_pixel <= {h_pixel_mult, 4'd0} - 1'b1;
+	end else if (inside_playfield) begin
+		if (hsync_posedge) begin
 			fbuf_addr <= fbuf_line_addr;
 			if (fbuf_v_pixel == 0) begin
 				fbuf_v_pixel <= v_pixel_mult - 1'b1;
@@ -90,12 +94,15 @@ always @ (posedge clk) begin : AddressGenerator
 	end;
 end
 
+wire hsync_negedge;
+util_negedge hsync_negedge_inst(clk, res, hsync, hsync_negedge);
+
 wire pixel;
 
 bit_shifter Shifter(
 	.clk    (clk),
 	.enable (enable_pixel),
-	.load   (h_pixel == -11'h4),
+	.load   (hsync_negedge),
 	.mult   (h_pixel_mult - 1'b1),
 	
 	.d (fbuf_data),
