@@ -52,8 +52,10 @@ reg[3:0] fbuf_v_pixel = 0;
 
 reg[8:0] fbuf_line_addr = 0;
 
+wire [8:0] fbuf_line_addr_next = fbuf_line_addr + (display_pixel_width >> 4);
+
 wire inside_playfield_VGA = wide ? (v_pixel >= 48 && v_pixel < 432) : (v_pixel >= 80 && v_pixel < 400);
-wire inside_playfield_NTSC = wide ? (v_pixel >= 32 && v_pixel < 208) : (v_pixel >= 64 && v_pixel < 192);
+wire inside_playfield_NTSC = wide ? (v_pixel >= 24 && v_pixel < 216) : (v_pixel >= 56 && v_pixel < 184);
 wire inside_playfield = ntsc ? inside_playfield_NTSC : inside_playfield_VGA;
 assign outside_playfield = !inside_playfield;
 
@@ -73,12 +75,13 @@ always @ (posedge clk) begin : AddressGenerator
 		fbuf_h_pixel <= {h_pixel_mult, 4'd0} - 1'b1;
 	end else if (inside_playfield) begin
 		if (hsync_posedge) begin
-			fbuf_addr <= fbuf_line_addr;
 			if (fbuf_v_pixel == 0) begin
 				fbuf_v_pixel <= v_pixel_mult - 1'b1;
-				fbuf_line_addr <= fbuf_line_addr + (display_pixel_width >> 4);
+				fbuf_line_addr <= fbuf_line_addr_next;
+				fbuf_addr <= fbuf_line_addr_next;
 			end else begin
 				fbuf_v_pixel <= fbuf_v_pixel - 1'b1;
+				fbuf_addr <= fbuf_line_addr;
 			end;
 			fbuf_h_pixel <= {h_pixel_mult, 4'd0} - 1'b1;
 		end else if (enable_pixel) begin
@@ -110,7 +113,7 @@ bit_shifter Shifter(
 );
 
 wire [1:0] color =
-	(enable_pixel) && (v_pixel == 0 || v_pixel == 479) ? 2'd1 :
+	(enable_pixel) && (v_pixel == 0 || v_pixel == (ntsc ? 239 : 479)) ? 2'd1 :
 	(inside_playfield && enable_pixel) ? {1'b1, pixel} :
 	2'd0;
 

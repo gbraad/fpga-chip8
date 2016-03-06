@@ -62,19 +62,6 @@ wire [10:0] vSyncStart_NTSC = 486 / 2;
 wire [10:0] vSyncEnd_NTSC   = 496 / 2;
 wire [10:0] vEnd_NTSC       = 526 / 2 - 1;
 
-// PAL configuration 288p (720x288)
-
-/*
-wire [10:0] hDisp_NTSC      = 720;
-wire [10:0] hSyncStart_NTSC = 732;
-wire [10:0] hSyncEnd_NTSC   = 795;
-wire [10:0] hEnd_NTSC       = 864 - 1;
-
-wire [10:0] vDisp_NTSC      = 576 / 2;
-wire [10:0] vSyncStart_NTSC = 581 / 2;
-wire [10:0] vSyncEnd_NTSC   = 586 / 2;
-wire [10:0] vEnd_NTSC       = 626 / 2 - 1;
-*/
 
 // positive sync signals from sync generator
 wire hsync_syncgen;
@@ -84,9 +71,6 @@ always @(posedge clk) begin
 	vsync <= !vsync_syncgen;
 	hsync <= ntsc ^ hsync_syncgen;
 end
-
-// Raw pixel/line counter
-wire[10:0] hpos, vpos;
 
 // The actual pixel
 wire[10:0] pixel_x, pixel_y;
@@ -112,11 +96,8 @@ vga_sync SyncGenerator(
 	.h_sync (hsync_syncgen),
 	.v_sync (vsync_syncgen),
 	
-	.h_pos (hpos),
-	.v_pos (vpos),
-
-	.h_pixel (pixel_x),
-	.v_pixel (pixel_y),
+	.h_pos (pixel_x),
+	.v_pos (pixel_y),
 	
 	.pixel_enable (display_enable)
 );
@@ -143,7 +124,7 @@ display Display(
 	.blue  (blue),
 	
 	.vsync (vsync_syncgen),
-	.hsync (hpos == 0),
+	.hsync (hsync_syncgen),
 	
 	.fbuf_addr (fbuf_addr),
 	.fbuf_data (fbuf_data),
