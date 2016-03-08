@@ -17,6 +17,27 @@
 
 `include "../blitter.vh"
 
+
+module cpu_clock(
+	input	 clk_27M,
+	input	 slow,
+	output cpu_clk
+);
+
+wire cpu_clk_fast;
+wire cpu_clk_slow;
+
+mist_pll_cpu mist_pll_cpu_inst(
+	.inclk0 (clk_27M),
+	.c0     (cpu_clk_fast),
+	.c1     (cpu_clk_slow)
+);
+
+assign cpu_clk = slow ? cpu_clk_slow : cpu_clk_fast;
+
+endmodule
+	
+
 module mist_top(
 	// 27 MHz clocks
 	input	[1:0]		CLOCK_27,
@@ -46,22 +67,34 @@ module mist_top(
   
 );
 
+
+wire [7:0] status;
+wire status_monitor_wide = status[1];
+wire status_cpu_slow = status[2];
+
+
+// CPU clocks
+
+wire cpu_clk;
+cpu_clock cpu_clock_inst(CLOCK_27[1], status_cpu_slow, cpu_clk);
+
+
+// Other clocks
+
 wire clk_50M;
 wire clk_25M;
 wire clk_13_5M;
 wire clk_12k;
 
 wire disable_scandoubler;
+wire clk_disp;
 
-wire clk_disp = disable_scandoubler ? clk_13_5M : clk_25M;
-
-wire [7:0] status;
-wire status_monitor_wide = status[1];
-wire status_cpu_slow = status[2];
-
-wire cpu_clk_fast;
-wire cpu_clk_slow;
-wire cpu_clk = status_cpu_slow ? cpu_clk_slow : cpu_clk_fast;
+mist_display_clk_mux	mist_display_clk_mux_inst(
+	.clkselect (disable_scandoubler),
+	.inclk0x   (clk_25M),
+	.inclk1x   (clk_13_5M),
+	.outclk    (clk_disp)
+);
 
 mist_pll	mist_pll_inst (
 	.inclk0 (CLOCK_27[0]),
@@ -80,18 +113,6 @@ wire audio_enable;
 wire audio = audio_enable && &audio_count[4:3];
 assign AUDIO_R = audio;
 assign AUDIO_L = audio;
-
-clk_divider  #(.divider(4000)) ClockDividerFast(
-	0,
-	clk_50M,
-	cpu_clk_fast
-);
-
-clk_divider  #(.divider(10000)) ClockDividerSlow(
-	0,
-	clk_50M,
-	cpu_clk_slow
-);
 
 // Program uploader
 
