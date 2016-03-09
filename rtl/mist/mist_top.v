@@ -216,6 +216,24 @@ wire [5:0] chip8_G;
 wire [5:0] chip8_B;
 wire chip8_hs;
 wire chip8_vs;
+
+wire [5:0] osd_in_R;
+wire [5:0] osd_in_G;
+wire [5:0] osd_in_B;
+wire osd_in_hs;
+wire osd_in_vs;
+
+osd_register_in osd_in_inst(
+	clk_disp,
+	
+	chip8_R, chip8_G, chip8_B,
+	chip8_hs, chip8_vs,
+
+	osd_in_R, osd_in_G, osd_in_B,
+	osd_in_hs, osd_in_vs
+);
+
+
 wire osd_hs;
 wire osd_vs;
 
@@ -231,8 +249,8 @@ osd OSD(
 	SPI_SS3,
 	SPI_DI,
 	
-	chip8_R, chip8_G, chip8_B,
-	chip8_hs, chip8_vs,
+	osd_in_R, osd_in_G, osd_in_B,
+	osd_in_hs, osd_in_vs,
 
 	VGA_R, VGA_G, VGA_B,
 	osd_hs, osd_vs

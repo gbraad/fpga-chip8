@@ -58,8 +58,8 @@ module cpu(
 	input						res,
 
 	input						clk,
-	input						clk_60hz,
-	input						vsync,
+	input						clk_60hz_in,
+	input						vsync_in,
 	input						halt,
 
 	input			[15:0]	keyMatrix,
@@ -88,6 +88,17 @@ module cpu(
 	output reg 				error = 0
 
 );
+
+// Bring signals into cpu clock domain
+
+wire vsync;
+util_sync_domain vsync_sync_inst(clk, vsync_in, vsync);
+
+wire clk_60hz;
+util_sync_domain clk60hz_sync_inst(clk, clk_60hz_in, clk_60hz);
+
+
+// Key matrix
 
 wire [15:0] keyMatrix_edge;
 edge_detect #(.width(16)) KeyMatrixEdgeDetect(clk, keyMatrix, keyMatrix_edge);
@@ -222,7 +233,7 @@ reg [3:0] nstate;
 wire clk_60hz_edge;
 edge_detect Clk60HzEdge(clk, clk_60hz, clk_60hz_edge);
 
-always @ (posedge clk) begin
+always @(posedge clk) begin
 	if (res) begin
 		delay_timer <= 0;
 		sound_timer <= 0;

@@ -200,14 +200,14 @@ blitter Blitter(
 // CPU
 
 wire cpu_blit_ready;
-util_sync_domain sync_blit_ready(cpu_clk, res, blit_ready, cpu_blit_ready);
+util_sync_domain sync_blit_ready(cpu_clk, blit_ready, cpu_blit_ready);
 
 cpu CPU(
 	.res(res),
 	
 	.clk(cpu_clk),
-	.clk_60hz(vga_vsync),
-	.vsync(vga_beam_outside),
+	.clk_60hz_in(vga_vsync),
+	.vsync_in(vga_beam_outside),
 	.halt(cpu_halt || uploading || !cpu_blit_ready),
 	
 	.keyMatrix(keyboard_matrix),

@@ -1,6 +1,36 @@
 // A simple OSD implementation. Can be hooked up between a cores
 // VGA output and the physical VGA pins
 
+module osd_register_in(
+	// OSDs pixel clock, should be synchronous to cores pixel clock to
+	// avoid jitter.
+	input 			pclk,
+
+	// VGA signals coming from core
+	input [5:0]  	red_in,
+	input [5:0]  	green_in,
+	input [5:0]  	blue_in,
+	input				hs_in,
+	input				vs_in,
+	
+	// VGA signals coming from core
+	output reg [5:0]	red_out,
+	output reg [5:0]	green_out,
+	output reg [5:0]	blue_out,
+	output reg			hs_out,
+	output reg			vs_out
+);
+
+always @(posedge pclk) begin
+	red_out <= red_in;
+	green_out <= green_in;
+	blue_out <= blue_in;
+	hs_out <= hs_in;
+	vs_out <= vs_in;
+end
+
+endmodule
+
 module osd (
 	// OSDs pixel clock, should be synchronous to cores pixel clock to
 	// avoid jitter.

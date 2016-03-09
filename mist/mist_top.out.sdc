@@ -19,7 +19,7 @@
 ## PROGRAM "Quartus II"
 ## VERSION "Version 13.1.4 Build 182 03/12/2014 SJ Web Edition"
 
-## DATE    "Tue Mar 08 21:16:40 2016"
+## DATE    "Wed Mar 09 16:30:39 2016"
 
 ##
 ## DEVICE  "EP3C25E144C8"
@@ -78,6 +78,7 @@ derive_clock_uncertainty
 # Set Clock Groups
 #**************************************************************
 
+set_clock_groups -exclusive -group [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -group [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[3]}] 
 
 
 #**************************************************************
