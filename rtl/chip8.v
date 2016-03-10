@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton S�rensen
+	Copyright (C) 2013-2014  Carsten Elton Sorensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -16,28 +16,29 @@
 */
 
 module chip8(
-	input		res,
+	input				res,
 	
-	input		vgaClk,	 // 25.152.000 Hz clock
-	input		cpu_clk,	 // 20.000 Hz clock
-	input		blit_clk, // 100.000.000 Hz clock, or as fast as it can get. cpu_clk must be derived from this
+	input				disp_clk,	 // 13.500.000 or 25.152.000 Hz clock
+	input				cpu_clk,	 // 20.000 Hz clock
+	input				blit_clk, // 100.000.000 Hz clock, or as fast as it can get.
 	
-	input		cpu_halt,
+	input				cpu_halt,
 	
-	input		wide,
+	input				ntsc,
+	input				vga_wide,
 	
-	output			Hsync,
-	output			Vsync,
-	output [2:0]	vgaRed,
-	output [2:0]	vgaGreen,
-	output [2:1]	vgaBlue,
+	output			vga_hsync,
+	output			vga_vsync,
+	output [2:0]	vga_red,
+	output [2:0]	vga_green,
+	output [2:1]	vga_blue,
 	
-	output [15:0]	currentOpcode,
+	output [15:0]	cpu_opcode,
 	
 	output			audio_enable,
 	
-	input PS2KeyboardData,
-	input PS2KeyboardClk,
+	input				ps2_data,
+	input				ps2_clk,
 	
 	input				uploading,
 	input				upload_en,
@@ -45,201 +46,189 @@ module chip8(
 	input [11:0]	upload_addr,
 	input [7:0]		upload_data,
 	
-	output	error
+	output			error
 );
 
-wire			vgaHires;
-wire			vgaOutside;
+wire vga_hires; 			// whether to use the hires display
+wire vga_beam_outside;	// the beam is outside the playfield
 
 // Framebuffer RAM wires, used by VGA circuit
 
-wire	[15:0]	vgabuf_out;
-wire	[8:0]		vgabuf_addr;
+wire [15:0]	vga_fbuf_data;
+wire [8:0]	vga_fbuf_addr;
 
 // Framebuffer RAM wires, used by blitter
 
-wire	[15:0]	fbuf_out, fbuf_in;
-wire	[8:0]		fbuf_addr;
-wire				fbuf_en;
-wire				fbuf_write;
+wire [15:0]	blit_fbuf_data_out, blit_fbuf_data_in;
+wire [8:0]	blit_fbuf_addr;
+wire			blit_fbuf_en;
+wire			blit_fbuf_write;
 
 // CPU RAM wires, used by blitter
 
-wire	[7:0]		cbuf_out;
-wire	[11:0]	cbuf_addr;
+wire [7:0]	blit_ram_data;
+wire [11:0]	blit_ram_addr;
 
 // CPU RAM wires, used by CPU
 
-wire	[7:0]		cpu_out, cpu_in;
-wire	[11:0]	cpu_addr;
-wire				cpu_en;
-wire				cpu_wr;
+wire [7:0]	cpu_data_out, cpu_data_in;
+wire [11:0]	cpu_addr;
+wire			cpu_en;
+wire			cpu_wr;
 
 // Registers for blitter operations
 
-wire	[2:0]		blit_op;
-wire	[11:0]	blit_src;
-wire	[3:0]		blit_srcHeight;
-wire	[6:0] 	blit_destX;
-wire	[5:0] 	blit_destY;
-wire 				blit_enable;
-wire				blit_ready;
-wire				blit_collision;
+wire [2:0]	blit_op;
+wire [11:0]	blit_src_addr;
+wire [3:0]	blit_src_height;
+wire [6:0] 	blit_dest_x;
+wire [5:0] 	blit_dest_y;
+wire 			blit_enable;
+wire			blit_ready;
+wire			blit_collision;
 
 // VGA framebuffer
 
 framebuffer VGAFramebuffer(
-	vgaClk,
-	vgabuf_addr,
-	vgabuf_out,
+	disp_clk,
+	vga_fbuf_addr,
+	vga_fbuf_data,
 
 	blit_clk,
-	fbuf_en,
-	fbuf_write,
-	fbuf_addr,
-	fbuf_in,
-	fbuf_out
+	blit_fbuf_en,
+	blit_fbuf_write,
+	blit_fbuf_addr,
+	blit_fbuf_data_in,
+	blit_fbuf_data_out
 );
 
 // PS/2 keyboard
 
-wire [7:0]	keyboardData;
-wire			keyboardReady;
-reg  [15:0]	keyboardMatrix;
+wire [7:0]	keyboard_data;
+wire			keyboard_ready;
+reg  [15:0]	keyboard_matrix;
+reg         keyboard_down_flag = 1;
 
-task updateKey;
-	input [7:0] code;
-	input value;
-	begin
-		case (code)
-			8'h16: keyboardMatrix[4'h1] = value;
-			8'h1E: keyboardMatrix[4'h2] = value;
-			8'h26: keyboardMatrix[4'h3] = value;
-			8'h25: keyboardMatrix[4'hC] = value;
-			8'h15: keyboardMatrix[4'h4] = value;
-			8'h1D: keyboardMatrix[4'h5] = value;
-			8'h24: keyboardMatrix[4'h6] = value;
-			8'h2D: keyboardMatrix[4'hD] = value;
-			8'h1C: keyboardMatrix[4'h7] = value;
-			8'h1B: keyboardMatrix[4'h8] = value;
-			8'h23: keyboardMatrix[4'h9] = value;
-			8'h2B: keyboardMatrix[4'hE] = value;
-			8'h1A: keyboardMatrix[4'hA] = value;
-			8'h22: keyboardMatrix[4'h0] = value;
-			8'h21: keyboardMatrix[4'hB] = value;
-			8'h2A: keyboardMatrix[4'hF] = value;
-		endcase
-	end
-endtask
-
-ps2in Keyboard(
-	.ps2clk(PS2KeyboardClk),
-	.ps2data(PS2KeyboardData),
-	
-	.ready(keyboardReady),
-	.data(keyboardData)
+ps2in Ps2Decoder(
+	.ps2_clk  (ps2_clk),
+	.ps2_data (ps2_data),
+	.ready    (keyboard_ready),
+	.data     (keyboard_data)
 );
 
-reg kbdDown = 1;
-
-always @ (posedge keyboardReady) begin
-	if (keyboardData == 8'hF0) begin
-		kbdDown = 0;
+always @(posedge keyboard_ready)
+	if (keyboard_data == 8'hF0) begin
+		keyboard_down_flag <= 0;
 	end else begin
-		updateKey(keyboardData, kbdDown);
-		kbdDown = 1;
-	end;
-end
+		case (keyboard_data)
+			8'h16: keyboard_matrix[4'h1] = keyboard_down_flag;
+			8'h1E: keyboard_matrix[4'h2] = keyboard_down_flag;
+			8'h26: keyboard_matrix[4'h3] = keyboard_down_flag;
+			8'h25: keyboard_matrix[4'hC] = keyboard_down_flag;
+			8'h15: keyboard_matrix[4'h4] = keyboard_down_flag;
+			8'h1D: keyboard_matrix[4'h5] = keyboard_down_flag;
+			8'h24: keyboard_matrix[4'h6] = keyboard_down_flag;
+			8'h2D: keyboard_matrix[4'hD] = keyboard_down_flag;
+			8'h1C: keyboard_matrix[4'h7] = keyboard_down_flag;
+			8'h1B: keyboard_matrix[4'h8] = keyboard_down_flag;
+			8'h23: keyboard_matrix[4'h9] = keyboard_down_flag;
+			8'h2B: keyboard_matrix[4'hE] = keyboard_down_flag;
+			8'h1A: keyboard_matrix[4'hA] = keyboard_down_flag;
+			8'h22: keyboard_matrix[4'h0] = keyboard_down_flag;
+			8'h21: keyboard_matrix[4'hB] = keyboard_down_flag;
+			8'h2A: keyboard_matrix[4'hF] = keyboard_down_flag;
+		endcase
+		keyboard_down_flag <= 1;
+	end
 
 // CPU memory
 
-cpu_memory CPUMemory (
-	.a_clk  (uploading ? upload_clk : cpu_clk),
-	.a_en   (uploading ? upload_en : cpu_en),
-	.a_write(uploading ? 1'b1 : cpu_wr),
-	.a_out  (cpu_out),
-	.a_in   (uploading ? upload_data : cpu_in),
-	.a_addr (uploading ? upload_addr : cpu_addr),
+cpu_memory CpuMemory(
+	.a_clk      (uploading ? upload_clk : cpu_clk),
+	.a_en       (uploading ? upload_en : cpu_en),
+	.a_write    (uploading ? 1'b1 : cpu_wr),
+	.a_data_out (cpu_data_out),
+	.a_data_in  (uploading ? upload_data : cpu_data_in),
+	.a_addr     (uploading ? upload_addr : cpu_addr),
 	
-	.b_out(cbuf_out),
-	.b_addr(cbuf_addr),
-	.b_clk(blit_clk)
+	.b_data (blit_ram_data),
+	.b_addr (blit_ram_addr),
+	.b_clk  (blit_clk)
 );
 
-vga_block VGA(
-	.clk(vgaClk),
-	.hires(vgaHires),
-	.wide(wide),
+vga_block Vga(
+	.clk   (disp_clk),
+
+	.ntsc  (ntsc),
+	.hires (vga_hires),
+	.wide  (vga_wide),
 	
-	.hSync(Hsync),
-	.vSync(Vsync),
-	.vOutside(vgaOutside),
+	.hsync (vga_hsync),
+	.vsync (vga_vsync),
+	.beam_outside (vga_beam_outside),
 	
-	.r(vgaRed), 
-	.g(vgaGreen),
-	.b(vgaBlue),
+	.red   (vga_red), 
+	.green (vga_green),
+	.blue  (vga_blue),
 	
-	.fbAddr(vgabuf_addr),
-	.fbData(vgabuf_out)
+	.fbuf_addr (vga_fbuf_addr),
+	.fbuf_data (vga_fbuf_data)
 );
 
 blitter Blitter(
 	.clk(blit_clk),
-	.hires(vgaHires),
+	.hires(vga_hires),
 
 	.operation(blit_op),
-	.src(blit_src),
-	.srcHeight(blit_srcHeight),
-	.destX(blit_destX), .destY(blit_destY),
+	.src(blit_src_addr),
+	.srcHeight(blit_src_height),
+	.destX(blit_dest_x), .destY(blit_dest_y),
 	.enable(blit_enable),
 	.ready(blit_ready),
 	.collision(blit_collision),
 
-	.buf_out(fbuf_out),
-	.buf_addr(fbuf_addr),
-	.buf_in(fbuf_in),
-	.buf_enable(fbuf_en),
-	.buf_write(fbuf_write),
+	.buf_out(blit_fbuf_data_out),
+	.buf_in(blit_fbuf_data_in),
+	.buf_addr(blit_fbuf_addr),
+	.buf_enable(blit_fbuf_en),
+	.buf_write(blit_fbuf_write),
 	
-	.cpu_out(cbuf_out),
-	.cpu_addr(cbuf_addr)
+	.cpu_out(blit_ram_data),
+	.cpu_addr(blit_ram_addr)
 );
 
 // CPU
-
-wire cpu_blit_ready;
-util_sync_domain sync_blit_ready(cpu_clk, res, blit_ready, cpu_blit_ready);
 
 cpu CPU(
 	.res(res),
 	
 	.clk(cpu_clk),
-	.clk_60hz(Vsync),
-	.vsync(vgaOutside),
-	.halt(cpu_halt || uploading || !cpu_blit_ready),
+	.clk_60hz_in(vga_vsync),
+	.vsync_in(vga_beam_outside),
+	.halt(cpu_halt || uploading),
 	
-	.keyMatrix(keyboardMatrix),
+	.keyMatrix(keyboard_matrix),
 	
 	.ram_en(cpu_en),
 	.ram_wr(cpu_wr),
-	.ram_out(cpu_out),
-	.ram_in(cpu_in),
+	.ram_out(cpu_data_out),
+	.ram_in(cpu_data_in),
 	.ram_addr(cpu_addr),
 
-	.hires(vgaHires),
+	.hires(vga_hires),
 	
 	.audio_enable(audio_enable),
 
 	.blit_op(blit_op),
-	.blit_src(blit_src),
-	.blit_srcHeight(blit_srcHeight),
-	.blit_destX(blit_destX),
-	.blit_destY(blit_destY),
+	.blit_src(blit_src_addr),
+	.blit_srcHeight(blit_src_height),
+	.blit_destX(blit_dest_x),
+	.blit_destY(blit_dest_y),
 	.blit_enable(blit_enable),
-	.blit_done(cpu_blit_ready),
+	.blit_done_in(blit_ready),
 	.blit_collision(blit_collision),
 	
-	.cur_instr(currentOpcode),
+	.cur_instr(cpu_opcode),
 
 	.error(error)
 );

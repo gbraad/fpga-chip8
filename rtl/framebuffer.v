@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton Sørensen
+	Copyright (C) 2013-2014  Carsten Elton Sorensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -30,15 +30,16 @@ module framebuffer(
 
 reg [15:0] ram [0:511];
 
-always @(posedge vga_clk)
-	vga_out <= ram[vga_addr];
-	
 always @(posedge clk) begin
 	if (fbuf_en) begin
-		fbuf_out <= ram[fbuf_addr];
 		if (fbuf_write)
 			ram[fbuf_addr] <= fbuf_in;
+		else
+			fbuf_out <= ram[fbuf_addr];
 	end
 end
+
+always @(posedge vga_clk)
+	vga_out <= ram[vga_addr];
 
 endmodule

@@ -1,11 +1,44 @@
 // A simple OSD implementation. Can be hooked up between a cores
 // VGA output and the physical VGA pins
 
+module osd_register_in(
+	// OSDs pixel clock, should be synchronous to cores pixel clock to
+	// avoid jitter.
+	input 			pclk,
+
+	// VGA signals coming from core
+	input [5:0]  	red_in,
+	input [5:0]  	green_in,
+	input [5:0]  	blue_in,
+	input				hs_in,
+	input				vs_in,
+	
+	// VGA signals coming from core
+	output reg [5:0]	red_out,
+	output reg [5:0]	green_out,
+	output reg [5:0]	blue_out,
+	output reg			hs_out,
+	output reg			vs_out
+);
+
+always @(posedge pclk) begin
+	red_out <= red_in;
+	green_out <= green_in;
+	blue_out <= blue_in;
+	hs_out <= hs_in;
+	vs_out <= vs_in;
+end
+
+endmodule
+
 module osd (
 	// OSDs pixel clock, should be synchronous to cores pixel clock to
 	// avoid jitter.
 	input 			pclk,
 
+	// disable scandoubling
+	input          disable_scandoubler,
+	
 	// SPI interface
 	input         sck,
 	input         ss,
@@ -31,7 +64,7 @@ parameter OSD_Y_OFFSET = 10'd0;
 parameter OSD_COLOR    = 3'd0;
 
 localparam OSD_WIDTH  = 10'd256;
-localparam OSD_HEIGHT = 10'd128;
+wire [9:0] OSD_HEIGHT = disable_scandoubler ? 10'd64 : 10'd128;
 
 // *********************************************************************************
 // spi client
@@ -146,7 +179,7 @@ end
 wire [9:0] h_osd_start = h_dsp_ctr + OSD_X_OFFSET - (OSD_WIDTH >> 1);
 wire [9:0] h_osd_end   = h_dsp_ctr + OSD_X_OFFSET + (OSD_WIDTH >> 1) - 1;
 wire [9:0] v_osd_start = v_dsp_ctr + OSD_Y_OFFSET - (OSD_HEIGHT >> 1);
-wire [9:0] v_osd_end   = v_dsp_ctr + OSD_Y_OFFSET + (OSD_HEIGHT >> 1) - 1;
+wire [9:0] v_osd_end   = v_dsp_ctr + OSD_Y_OFFSET + (OSD_HEIGHT >> 1);
 
 reg h_osd_active, v_osd_active;
 always @(posedge pclk) begin
@@ -163,7 +196,7 @@ end
 wire osd_de = osd_enable && h_osd_active && v_osd_active;
 
 wire [7:0] osd_hcnt = h_cnt - h_osd_start + 7'd1;  // one pixel offset for osd_byte register
-wire [6:0] osd_vcnt = v_cnt - v_osd_start;
+wire [6:0] osd_vcnt = (v_cnt - v_osd_start) << disable_scandoubler;
 
 wire osd_pixel = osd_byte[osd_vcnt[3:1]];
 

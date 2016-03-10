@@ -58,8 +58,8 @@ module cpu(
 	input						res,
 
 	input						clk,
-	input						clk_60hz,
-	input						vsync,
+	input						clk_60hz_in,
+	input						vsync_in,
 	input						halt,
 
 	input			[15:0]	keyMatrix,
@@ -80,7 +80,7 @@ module cpu(
 	output reg	[6:0] 	blit_destX = 0,
 	output reg	[5:0] 	blit_destY = 0,
 	output reg 				blit_enable = 0,
-	input						blit_done,
+	input						blit_done_in,
 	input						blit_collision,
 	
 	output reg	[15:0]	cur_instr = 16'h1337,
@@ -88,6 +88,20 @@ module cpu(
 	output reg 				error = 0
 
 );
+
+// Bring signals into cpu clock domain
+
+wire vsync;
+util_sync_domain vsync_sync_inst(clk, vsync_in, vsync);
+
+wire clk_60hz;
+util_sync_domain clk60hz_sync_inst(clk, clk_60hz_in, clk_60hz);
+
+wire blit_done;
+util_sync_domain blit_done_inst(clk, blit_done_in, blit_done);
+
+
+// Key matrix
 
 wire [15:0] keyMatrix_edge;
 edge_detect #(.width(16)) KeyMatrixEdgeDetect(clk, keyMatrix, keyMatrix_edge);
@@ -146,7 +160,7 @@ reg [7:0] instr_buf;
 
 wire [15:0] instr = {instr_buf, ram_out};
 
-wire [3:0] fvx = instr[15:12] == 4'hB ? 0 : instr[11:8];
+wire [3:0] fvx = instr[15:12] == 4'hB ? 4'd0 : instr[11:8];
 wire [3:0] fvy = instr[7:4];
 wire [7:0] fkk = instr[7:0];
 
@@ -222,7 +236,7 @@ reg [3:0] nstate;
 wire clk_60hz_edge;
 edge_detect Clk60HzEdge(clk, clk_60hz, clk_60hz_edge);
 
-always @ (posedge clk) begin
+always @(posedge clk) begin
 	if (res) begin
 		delay_timer <= 0;
 		sound_timer <= 0;

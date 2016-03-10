@@ -104,22 +104,4 @@ assign out_en = (cmd == UIO_FILE_TX_DAT) && !ss;
 assign out_a = addr[11:0];
 assign out_d = {sbuf, sdi};
 
-/*
-// include the embedded dual port ram
-data_io_ram data_io_ram (
-	// wire up cpu port
-	.address_a   	( a					),
-	.clock_a			( clk					),
-	.data_a			( din					),
-	.wren_a			( we					),
-	.q_a				( dout				),
-	
-	// io controller port
-	.address_b		( addr[13:0]		),
-	.clock_b			( rclk				),
-	.data_b			( {sbuf, sdi}		),
-	.wren_b			( (cmd == UIO_FILE_TX_DAT) && !ss	)
-);
-*/
-
 endmodule

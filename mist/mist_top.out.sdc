@@ -19,7 +19,7 @@
 ## PROGRAM "Quartus II"
 ## VERSION "Version 13.1.4 Build 182 03/12/2014 SJ Web Edition"
 
-## DATE    "Sat Nov 15 11:44:15 2014"
+## DATE    "Thu Mar 10 20:51:52 2016"
 
 ##
 ## DEVICE  "EP3C25E144C8"
@@ -38,14 +38,13 @@ set_time_format -unit ns -decimal_places 3
 # Create Clock
 #**************************************************************
 
-create_clock -name {CLOCK_27[0]} -period 37.037 -waveform { 0.000 18.518 } [get_ports {CLOCK_27[0]}]
 
 
 #**************************************************************
 # Create Generated Clock
 #**************************************************************
 
-derive_pll_clocks
+derive_pll_clocks -create_base_clocks
 
 
 #**************************************************************
@@ -77,12 +76,27 @@ derive_clock_uncertainty
 # Set Clock Groups
 #**************************************************************
 
+set_clock_groups -exclusive -group [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}] -group [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[3]}] 
+set_clock_groups -exclusive -group [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[0]}] -group [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[1]}] 
 
 
 #**************************************************************
 # Set False Path
 #**************************************************************
 
+# Cut paths from pixel clocks to CPU clocks
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[0]}]
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[1]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[1]}]
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[3]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[0]}]
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[3]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[1]}]
+
+# Cut paths from blitter clock to CPU clocks
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[0]}]
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[0]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[1]}]
+
+# Cut paths from PS/2 clock to CPU clocks
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[0]}]
+set_false_path  -from  [get_clocks {mist_pll_inst|altpll_component|auto_generated|pll1|clk[2]}]  -to  [get_clocks {cpu_clock_inst|mist_pll_cpu_inst|altpll_component|auto_generated|pll1|clk[1]}]
 
 
 #**************************************************************

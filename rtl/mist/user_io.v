@@ -36,6 +36,7 @@ module user_io #(parameter STRLEN=0) (
 	output [5:0] 	JOY1,
 	output [1:0] 	BUTTONS,
 	output [1:0] 	SWITCHES,
+	output         disable_scandoubler,
 
 	output reg [7:0]   status,
 		
@@ -55,12 +56,13 @@ reg [2:0] 	      bit_cnt;    // counts bits 0-7 0-7 ...
 reg [7:0]         byte_cnt;   // counts bytes
 reg [5:0]         joystick0;
 reg [5:0]         joystick1;
-reg [3:0] 	      but_sw;
+reg [4:0] 	      but_sw;
 
 assign JOY0 = joystick0;
 assign JOY1 = joystick1;
 assign BUTTONS = but_sw[1:0];
 assign SWITCHES = but_sw[3:2];
+assign disable_scandoubler = but_sw[4];
 
 // this variant of user_io is for 8 bit cores (type == a4) only
 //wire [7:0] core_type = 8'ha4;
@@ -171,7 +173,7 @@ always@(posedge SPI_CLK or posedge SPI_SS_IO) begin
 
 			if(byte_cnt != 0) begin
 				if(cmd == 8'h01)
-					but_sw <= { sbuf[2:0], SPI_MOSI }; 
+					but_sw <= { sbuf[3:0], SPI_MOSI }; 
 
 				if(cmd == 8'h02)
 					joystick0 <= { sbuf[4:0], SPI_MOSI };

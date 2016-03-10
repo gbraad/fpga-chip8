@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton SÃƒÂ¯Ã‚Â¿Ã‚Â½rensen
+	Copyright (C) 2013  Carsten Elton SÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½rensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -16,6 +16,27 @@
 */
 
 `include "../blitter.vh"
+
+
+module cpu_clock(
+	input	 clk_27M,
+	input	 slow,
+	output cpu_clk
+);
+
+wire cpu_clk_fast;
+wire cpu_clk_slow;
+
+mist_pll_cpu mist_pll_cpu_inst(
+	.inclk0 (clk_27M),
+	.c0     (cpu_clk_fast),
+	.c1     (cpu_clk_slow)
+);
+
+assign cpu_clk = slow ? cpu_clk_slow : cpu_clk_fast;
+
+endmodule
+	
 
 module mist_top(
 	// 27 MHz clocks
@@ -46,46 +67,52 @@ module mist_top(
   
 );
 
-wire clk_50M;
-wire clk_25M;
-wire clk_12k;
 
 wire [7:0] status;
 wire status_monitor_wide = status[1];
 wire status_cpu_slow = status[2];
 
-wire cpu_clk_fast;
-wire cpu_clk_slow;
-wire cpu_clk = status_cpu_slow ? cpu_clk_slow : cpu_clk_fast;
+
+// CPU clocks
+
+wire cpu_clk;
+cpu_clock cpu_clock_inst(CLOCK_27[1], status_cpu_slow, cpu_clk);
+
+
+// Other clocks
+
+wire clk_50M;
+wire clk_25M;
+wire clk_13_5M;
+wire clk_12k;
+
+wire disable_scandoubler;
+wire clk_disp;
+
+mist_display_clk_mux	mist_display_clk_mux_inst(
+	.clkselect (disable_scandoubler),
+	.inclk0x   (clk_25M),
+	.inclk1x   (clk_13_5M),
+	.outclk    (clk_disp)
+);
 
 mist_pll	mist_pll_inst (
-//	.areset ( areset_sig ),
-	.inclk0 ( CLOCK_27[0] ),
-	.c0 ( clk_50M ),
-	.c1 ( clk_25M ),
-	.c2 ( clk_12k )
+	.inclk0 (CLOCK_27[0]),
+
+	.c0 (clk_50M),
+	.c1 (clk_25M),
+	.c2 (clk_12k),
+	.c3 (clk_13_5M)
 );
 
-reg [4:0] audio_pwm;
+reg [4:0] audio_count;
 always @(posedge clk_12k)
-	audio_pwm <= audio_pwm + 1'b1;
+	audio_count <= audio_count + 1'b1;
 
 wire audio_enable;
-wire audio = audio_enable && &audio_pwm[4:3];
+wire audio = audio_enable && &audio_count[4:3];
 assign AUDIO_R = audio;
 assign AUDIO_L = audio;
-
-clk_divider  #(.divider(4000)) ClockDividerFast(
-	0,
-	clk_50M,
-	cpu_clk_fast
-);
-
-clk_divider  #(.divider(10000)) ClockDividerSlow(
-	0,
-	clk_50M,
-	cpu_clk_slow
-);
 
 // Program uploader
 
@@ -134,6 +161,7 @@ user_io #(.STRLEN(14 + 25 + 23)) UserIO(
 //   .SWITCHES      (switches         ),
 	.BUTTONS       (buttons          ),
 
+	.disable_scandoubler(disable_scandoubler),
 //   .JOY0          (joyA             ),
 //   .JOY1          (joyB             ),
 
@@ -189,18 +217,43 @@ wire [5:0] chip8_B;
 wire chip8_hs;
 wire chip8_vs;
 
+wire [5:0] osd_in_R;
+wire [5:0] osd_in_G;
+wire [5:0] osd_in_B;
+wire osd_in_hs;
+wire osd_in_vs;
+
+osd_register_in osd_in_inst(
+	clk_disp,
+	
+	chip8_R, chip8_G, chip8_B,
+	chip8_hs, chip8_vs,
+
+	osd_in_R, osd_in_G, osd_in_B,
+	osd_in_hs, osd_in_vs
+);
+
+
+wire osd_hs;
+wire osd_vs;
+
+assign VGA_HS = disable_scandoubler ? osd_hs & osd_vs : osd_hs;
+assign VGA_VS = disable_scandoubler ? 1'b1 : osd_vs;
+
 osd OSD(
-	clk_25M,
+	clk_disp,
+	
+	disable_scandoubler,
 	
 	SPI_SCK,
 	SPI_SS3,
 	SPI_DI,
 	
-	chip8_R, chip8_G, chip8_B,
-	chip8_hs, chip8_vs,
+	osd_in_R, osd_in_G, osd_in_B,
+	osd_in_hs, osd_in_vs,
 
 	VGA_R, VGA_G, VGA_B,
-	VGA_HS, VGA_VS
+	osd_hs, osd_vs
 );
 
 // Chip-8 machine
@@ -210,11 +263,12 @@ wire [15:0] current_opcode;
 chip8 chip8machine(
 	res,
 	
-	clk_25M,
+	clk_disp,
 	cpu_clk,
 	clk_50M,
 	
 	uploading,
+	disable_scandoubler,
 	status_monitor_wide,
 	
 	chip8_hs, chip8_vs,

@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton S�rensen
+	Copyright (C) 2013-2014  Carsten Elton Sorensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -16,75 +16,120 @@
 */
 
 module vga_block(
-	// VGA clock
-	input					clk,
-	input					res,
+	input				clk,
+	input				res,
 	
-	// Hires or lores mode
-	input					hires,
-	input					wide,
+	input				ntsc,
+	input				hires,	// hires or lores mode
+	input				wide,		// widescreen
 
 	// Output
-	output				hSync,
-	output				vSync,
-	output				vOutside,	// high when not displaying the framebuffer
+	output reg		hsync,
+	output reg		vsync,
+	output			beam_outside,	// high when not displaying the framebuffer
 	
-	output	[2:0] 	r,
-	output	[2:0] 	g,
-	output	[1:0]		b,
+	output [2:0] 	red,
+	output [2:0] 	green,
+	output [1:0]	blue,
 	
 	// Framebuffer
-	output	[8:0]		fbAddr,
-	input		[15:0]	fbData);
+	output [8:0]	fbuf_addr,
+	input  [15:0]	fbuf_data
+);
 
 
-// VGA configuration
-localparam hSyncStart = 16;
-localparam hBackStart = 16 + 96;
-localparam hDispStart = 16 + 96 + 48;
-localparam hEnd       = 800 - 1;
+// VGA configuration (640x480)
+
+wire [10:0] hDisp_VGA      = 640;
+wire [10:0] hSyncStart_VGA = 656;
+wire [10:0] hSyncEnd_VGA   = 752;
+wire [10:0] hEnd_VGA       = 800 - 1;
+
+wire [10:0] vDisp_VGA      = 480;
+wire [10:0] vSyncStart_VGA = 491;
+wire [10:0] vSyncEnd_VGA   = 493;
+wire [10:0] vEnd_VGA       = 524 - 1;
 	
-localparam vSyncStart = 11;
-localparam vBackStart = 11 + 2;
-localparam vDispStart = 11 + 2 + 31;
-localparam vEnd       = 524 - 1;
+// NTSC configuration 240p (704x240)
 
-wire hSyncSignal;
-wire vSyncSignal;
-wire displayLineStart = hPos == 0 && vPos >= vDispStart;
+wire [10:0] hDisp_NTSC      = 704;
+wire [10:0] hSyncStart_NTSC = 728;
+wire [10:0] hSyncEnd_NTSC   = 791;
+wire [10:0] hEnd_NTSC       = 858 - 1;
 
-wire[10:0] hPos, vPos;
-wire[10:0] pixelX, pixelY;
-wire dispEnable;
+wire [10:0] vDisp_NTSC      = 480 / 2;
+wire [10:0] vSyncStart_NTSC = 486 / 2;
+wire [10:0] vSyncEnd_NTSC   = 496 / 2;
+wire [10:0] vEnd_NTSC       = 526 / 2 - 1;
+
+
+// positive sync signals from sync generator
+wire hsync_syncgen;
+wire vsync_syncgen;
+
+always @(posedge clk) begin
+	vsync <= !vsync_syncgen;
+	hsync <= ntsc ^ hsync_syncgen;
+end
+
+// The actual pixel
+wire[10:0] pixel_x, pixel_y;
+
+wire display_enable;
 
 // Sync generator
 	
-vga_sync VGASync(
-	clk,
-	res,
+vga_sync SyncGenerator(
+	.clk (clk),
+	.res (res),
 	
-	hSyncStart, hBackStart, hDispStart, hEnd,
-	vSyncStart, vBackStart, vDispStart, vEnd,
-	hSyncSignal, vSyncSignal,
-	hPos, vPos,
-	pixelX, pixelY, dispEnable
+	.h_disp       (ntsc ? hDisp_NTSC      : hDisp_VGA),
+	.h_sync_start (ntsc ? hSyncStart_NTSC : hSyncStart_VGA),
+	.h_sync_end   (ntsc ? hSyncEnd_NTSC   : hSyncEnd_VGA),
+	.h_end        (ntsc ? hEnd_NTSC       : hEnd_VGA),
+	
+	.v_disp       (ntsc ? vDisp_NTSC      : vDisp_VGA),
+	.v_sync_start (ntsc ? vSyncStart_NTSC : vSyncStart_VGA),
+	.v_sync_end   (ntsc ? vSyncEnd_NTSC   : vSyncEnd_VGA),
+	.v_end        (ntsc ? vEnd_NTSC       : vEnd_VGA),
+	
+	.h_sync (hsync_syncgen),
+	.v_sync (vsync_syncgen),
+	
+	.h_pos (pixel_x),
+	.v_pos (pixel_y),
+	
+	.pixel_enable (display_enable)
 );
-	
-assign vSync = !vSyncSignal;
-assign hSync = hSyncSignal;
+
+// Display generator
+
+wire[10:0] disp_pixel_x = ntsc ? pixel_x - (704 - 640) / 2 : pixel_x;
+wire disp_display_enable = display_enable & (disp_pixel_x < 640);
 
 display Display(
-	clk,
-	res,
+	.clk (clk),
+	.res (res),
 	
-	hires,
-	wide,
-	dispEnable,
-	pixelX, pixelY,
-	r, g, b,
-	vSyncSignal, displayLineStart,
-	fbAddr, fbData,
-	vOutside
+	.hires (hires),
+	.ntsc  (ntsc),
+	.wide  (wide),
+	
+	.enable_pixel (disp_display_enable),
+	.h_pixel      (disp_pixel_x),
+	.v_pixel      (pixel_y),
+	
+	.red   (red),
+	.green (green),
+	.blue  (blue),
+	
+	.vsync (vsync_syncgen),
+	.hsync (hsync_syncgen),
+	
+	.fbuf_addr (fbuf_addr),
+	.fbuf_data (fbuf_data),
+	
+	.outside_playfield (beam_outside)
 );
 
 endmodule

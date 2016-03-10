@@ -1,5 +1,5 @@
 /* FPGA Chip-8
-	Copyright (C) 2013  Carsten Elton S�rensen
+	Copyright (C) 2013-2014  Carsten Elton Sorensen
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@ module cpu_memory(
 	
 	input					a_en,
 	input					a_write,
-	output reg [7:0]	a_out,
-	input		  [7:0]	a_in,
-	input		 [11:0]	a_addr,
+	output reg [7:0]	a_data_out,
+	input		  [7:0]	a_data_in,
+	input		  [11:0]	a_addr,
 	
 	input					b_clk,
-	output reg [7:0]	b_out,
+	output reg [7:0]	b_data,
 	input		 [11:0]	b_addr
 );
 
@@ -35,7 +35,7 @@ reg [7:0] ram [0:4095];
 initial begin
 	$readmemh("../rom/font_large.vh", ram, 0, 255);
 	$readmemh("../rom/font_small.vh", ram, 256, 383);
-	$readmemh("../rom/reset.vh", ram, 384, 511);
+	$readmemh("../rom/reset.vh", ram, 384);
 	$readmemh("../rom/title.vh", ram, 512);
 	
 //	$readmemh("../games/addition.vh", ram, 512);
@@ -53,20 +53,18 @@ initial begin
 //	$readmemh("../games/rpltest.vh", ram, 512);
 end
 
-always @(posedge a_clk) begin
+always @(posedge a_clk)
 	if (a_en) begin
 		// Write protect the lower 512 bytes (charset)
 		if (a_write) begin
 			if (|a_addr[11:9])
-				ram[a_addr] <= a_in;
+				ram[a_addr] <= a_data_in;
 		end else begin
-			a_out <= ram[a_addr];
+			a_data_out <= ram[a_addr];
 		end
 	end
-end
 
-always @(posedge b_clk) begin
-	b_out <= ram[b_addr];
-end
+always @(posedge b_clk)
+	b_data <= ram[b_addr];
 
 endmodule
