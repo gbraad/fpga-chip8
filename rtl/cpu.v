@@ -80,7 +80,7 @@ module cpu(
 	output reg	[6:0] 	blit_destX = 0,
 	output reg	[5:0] 	blit_destY = 0,
 	output reg 				blit_enable = 0,
-	input						blit_done,
+	input						blit_done_in,
 	input						blit_collision,
 	
 	output reg	[15:0]	cur_instr = 16'h1337,
@@ -96,6 +96,9 @@ util_sync_domain vsync_sync_inst(clk, vsync_in, vsync);
 
 wire clk_60hz;
 util_sync_domain clk60hz_sync_inst(clk, clk_60hz_in, clk_60hz);
+
+wire blit_done;
+util_sync_domain blit_done_inst(clk, blit_done_in, blit_done);
 
 
 // Key matrix

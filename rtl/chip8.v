@@ -199,16 +199,13 @@ blitter Blitter(
 
 // CPU
 
-wire cpu_blit_ready;
-util_sync_domain sync_blit_ready(cpu_clk, blit_ready, cpu_blit_ready);
-
 cpu CPU(
 	.res(res),
 	
 	.clk(cpu_clk),
 	.clk_60hz_in(vga_vsync),
 	.vsync_in(vga_beam_outside),
-	.halt(cpu_halt || uploading || !cpu_blit_ready),
+	.halt(cpu_halt || uploading),
 	
 	.keyMatrix(keyboard_matrix),
 	
@@ -228,7 +225,7 @@ cpu CPU(
 	.blit_destX(blit_dest_x),
 	.blit_destY(blit_dest_y),
 	.blit_enable(blit_enable),
-	.blit_done(cpu_blit_ready),
+	.blit_done_in(blit_ready),
 	.blit_collision(blit_collision),
 	
 	.cur_instr(cpu_opcode),
