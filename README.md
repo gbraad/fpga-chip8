@@ -12,6 +12,8 @@ This project was a learning project for me, the purpose was to learn more about 
 
 # Instructions for MiST #
 
+Version 0.1.1 supports [the SCART cable](https://github.com/mist-devel/mist-board/wiki/ScartCable) when you use the [disable_scandoubler option in MIST.INI](https://github.com/mist-devel/mist-board/wiki/DocIni#scandoubler_disable).
+
 Press F12 to bring up the OSD. From here you can select a .CH8-file to load.
 
 The Chip-8 screen aspect is 2:1 which doesn't really fit on either a 4:3 or 16:9, you can select the type of screen you're using to view the output and the core will scale the output accordingly.
